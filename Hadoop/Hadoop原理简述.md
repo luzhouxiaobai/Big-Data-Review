@@ -43,7 +43,7 @@ Hadoop系统由两部分组成，分别是分布式文件系统HDFS (Hadoop Dist
 
 ### 二、HDFS的架构
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/tree/master/file/HDFS1.jpg" style="zoom:80%;" />
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/HDFS1.jpg" style="zoom:80%;" />
 
 
 

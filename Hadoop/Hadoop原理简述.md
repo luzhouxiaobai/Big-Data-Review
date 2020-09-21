@@ -11,11 +11,41 @@ Hadoop系统由两部分组成，分别是分布式文件系统HDFS (Hadoop Dist
 - 主控节点：JobTracker为MapReduce的主控节点，NameNode 为HDFS的主控节点，他们负责控制和管理整个集群的正常运行。
 - 从节点：TaskTracker为MapReduce的从节点，负责具体的任务执行；DataNode为HDFS的从节点，负责存储具体的数据。
 
-可以看出，Hadoop服从Master/Slaver（主从模式）。在集群部署的时候，一般JobTracker和NameNode部署在同一节点上，TaskTracker和DataNode部署在同一节点。
+可以看出，Hadoop服从Master/Slaver（主从架构）。在集群部署的时候，一般JobTracker和NameNode部署在同一节点上，TaskTracker和DataNode部署在同一节点。
 
 ## 第1.2节 HDFS原理简述
 
-### 
+### 一、HDFS的特征
+
+- 大规模数据的分布存储能力
+
+  HDFS以分布式方式和良好的可扩展提供了大规模数据的存储能力。
+
+- 高并发访问能力
+
+  HDFS以多节点并发访问的方式提供很高的数据访问带宽（高数据吞吐率）。
+
+- 容错能力
+
+  在分布式环境中，失效应当被认为是常态。因此，HDFS必须具备正确检测硬件故障，并且能快速从故障中恢复过来，确保数据不丢失。为了保证数据的不丢不出错，HDFS采用了多副本的方式（默认副本数目为3）。
+
+- 顺序文件访问
+
+  大数据批处理在大多数情况下都是大量简单记录的顺序处理。针对这个特性，为了提高大规模数据访问的效率，HDFS对顺序读进行了优化，但是对于随机访问负载较高。
+
+- 简单的一致性模型
+
+  支持大量数据的一次写入，多次读取。
+
+- 数据块存储模式
+
+  HDFS采用基于大粒度数据块的方式进行文件存储。默认的块大小是64MB，这样的好处是可以减少元数据的数量。
+
+### 二、HDFS的架构
+
+<img src="D:\远程仓库\Big-Data-Review\file\HDFS1.jpg" style="zoom:80%;" />
+
+
 
 ## 第1.3节 MapReduce原理简述
 

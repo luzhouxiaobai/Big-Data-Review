@@ -4,7 +4,7 @@
 
 Hadoop系统由两部分组成，分别是分布式文件系统HDFS (Hadoop Distributed File System) 和分布式计算框架MapReduce。其中，分布式文件系统主要用于大规模数据的分布式存储，而MapReduce则构建在分布式文件系统之上，对存储在分布式文件系统中的数据进行分布式计算。下图简单展示了Hadoop系统的架构。
 
-<img src='D:\远程仓库\Big-Data-Review\file\hadoop1.png' style='zoom:80%'/>
+<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop1.png' style='zoom:80%'/>
 
 从图中可以清晰的看出Hadoop系统由MapReduce和HDFS两个部分组成。从软件架构角度来看，Hadoop基于每个节点上的本地文件系统，构建了逻辑上整体化的分布式文件系统（HDFS），以此提供大规模可扩展的分布式数据存储功能；同时，Hadoop利用每个节点的计算资源，协调管理集群中的各个节点完成计算任务。图中涉及到几个概念：
 

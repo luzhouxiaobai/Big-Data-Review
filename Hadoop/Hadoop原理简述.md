@@ -51,7 +51,7 @@ Hadoop系统由两部分组成，分别是分布式文件系统HDFS (Hadoop Dist
 
 - NameNode
 
-  整个Hadoop集群中只有一个NameNode。它是整个系统的“总管”，负责管理HDFS的目录树和相关的文件元数据信息。这些信息是以“fsimage”（HDFS元数据镜像文件）和 “editlog”（HDFS文件改动日志）两个文件形式存放在本地磁盘，当HDFS重启时重新构造出来的。此外，NameNode还负责监控各个DataNode的健康状态，一旦发现某个DataNode宕掉，则将该DataNode移出，则将该DataNode移出HDFS并重新备份其上面的数据。
+  整个Hadoop集群中只有一个NameNode。它是整个系统的“总管”，负责管理HDFS的目录树和相关的文件元数据信息。这些信息是以“fsimage”（HDFS元数据镜像文件）和 “editlog”（HDFS文件改动日志），他们以文件形式存放在本地磁盘，当HDFS重启时会被重新构造出来的。此外，NameNode还负责监控各个DataNode的健康状态，一旦发现某个DataNode宕掉，则将该DataNode移出，则将该DataNode移出HDFS并重新备份其上面的数据。
 
 - DataNode
 
@@ -69,4 +69,20 @@ Hadoop系统由两部分组成，分别是分布式文件系统HDFS (Hadoop Dist
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mapreduce1.jpg" style="zoom:50%" />
 
-MapReduce能够解决的问题有一个共同特点：任务可以被分解为多个子问题，且这些子问题相对独立，彼此之间不会有牵制，待并行处理完这些子问题后，任务便被解决。在实际应用中，这类问题非常庞大，谷歌在论文中提到了MapReduce的一些典型应用，包括分布式grep、URL访问频率统计、Web连接图反转、倒排索引构建、分布式排序等
+MapReduce能够解决的问题有一个共同特点：任务可以被分解为多个子问题，且这些子问题相对独立，彼此之间不会有牵制，待并行处理完这些子问题后，任务便被解决。在实际应用中，这类问题非常庞大，谷歌在论文中提到了MapReduce的一些典型应用，包括分布式grep、URL访问频率统计、Web连接图反转、倒排索引构建、分布式排序等。
+
+### 二、MapReduce架构
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mapreduce2.jpg" style="zoom:50%" />
+
+- Job Client
+
+  作用客户端接口程序，用户可以通过该程序提交一个MapReduce程序
+
+- Job Tracker
+
+  JobTracker是整个MapReduce计算框架中的主服务，相当于集群的“管理者”，负责整个集群的作业控制和资源管理。在Hadoop内部，每个应用程序被表示成一个作业，每个作业又被进一步分成多个任务，而JobTracker的作业控制模块则负责作业的分解和状态监控。其中，最重要的是状态监控，主要包括TaskTracker状态监控、作业状态监控和任务状态监控等。其主要作用有两个：容错和为任务调度提供决策依据。一方面，通过状态监控， JobTracker能够及时发现存在异常或者出现故障的TaskTracker、作业或者任务，从而启动相应的容错机制进行处理；另一方面，由于JobTracker保存了作业和任务的近似实时运行信息，这些可用于任务调度时进行任务选择的依据。资源管理模块的作用是通过一定的策略将各个节点上的计算资源分配给集群中的任务。它由可插拔的任务调度器完成，用户可根据自己的需要编写相应的调度器。
+
+- Task Tracker
+
+  TaskTracker是Hadoop集群中运行于各个节点上的服务。它扮演着“通信枢纽”的角色，是JobTracker与Task之间的“沟通桥梁”：一方面，它从JobTracker端接收并执行各种命令，比如运行任务、提交任务、杀死任务等；另一方面，它将本节点上的各个任务状态通过周期性心跳汇报给JobTracker

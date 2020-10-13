@@ -1,5 +1,7 @@
 # 第2节 Hadoop的安装
 
+为了方便后面使用Hadoop的shell命令，我先介绍Hadoop的安装。
+
 Hadoop有多种安装模式，这里介绍伪分布式的安装。
 
 我测试过Ubutun、Centos和WSL，都可以正常安装Hadoop的所有版本。所有一般不会出现版本对应的问题。
@@ -195,7 +197,7 @@ vi mapred-site.xml
 <configuration>
     <property>
         <name>dfs.replication</name>
-        <value>1</value> <!-副本个数，可以按照自己的想法设置-->
+        <value>1</value> <!--副本个数，可以按照自己的想法设置-->
     </property>
     <property>
         <name>dfs.namenode.name.dir</name>
@@ -259,6 +261,10 @@ jps
 #### 叮！！！
 
 配置完成。
+
+打开浏览器，输入地址  **localhost:50070**
+
+<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mr50070.jpg' style='zoom:80%'/>
 
 现在你就走出了Hadoop的新手村。
 

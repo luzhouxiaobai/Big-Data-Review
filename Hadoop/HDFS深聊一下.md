@@ -154,4 +154,12 @@ HDFS的写过程复杂了很多。首先获取文件系统的实例这个无可�
 - SecondaryNameNode（SNN）
   - SNN主要是用来备份NameNode中的元数据，包括FsImage和EditLog。FsImage相当于HDFS的检查点，NameNode启动时会读取FsImage到内存，并将其与EditLog日志中的所有修改信息合并生成新的FsImage；在HDFS的运行过程中，所有的对HDFS的修改操作都会被记录到EditLog中。但是SSN并不会处理任何请求。
 - 心跳包（HeartBeats）和副本重建（re-replication）
-  - 
+  - NameNode会周期性向DataNode发送心跳包来检测DataNode是否崩溃或掉线。收到心跳包的DataNode需要回复，因为心跳包总是定时发送，因此NameNode会把要执行的命令通过心跳包发送给DataNode，DataNode接收到心跳包之后，一方面回复NameNode，另一方面就开始了与用户的数据传输。
+  - 当NameNode没有及时得到DataNode的回复就会判定该DataNode失效，会重新创建存储在该DataNode上的副本。
+- 数据一致性
+  - HDFS采用校验和（CheckSum）的方式保证数据一致性。数据会和校验和一起传输，应用接收到数据之后可以使用校验和进行验证。如果判定当前数据失效就需要从其他节点上获取数据。
+- 租约
+  - 为了放置多个进程向同一个文件写入数据，采用了租约（Lease）机制。
+  - 写入文件之前，客户端需要先获得NameNode发放的租约，对于同一个文件，NameNode只会发放一个租约。
+  - 如果NameNode发送租约后崩溃，则可以通过SSN恢复数据。
+  - 如果客户端获得租约后崩溃也无妨。因为租约限制，时间到了之后，即便客户端不释放租约，也会被强制释放。

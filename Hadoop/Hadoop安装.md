@@ -264,7 +264,7 @@ jps
 
 打开浏览器，输入地址  **localhost:50070**
 
-<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mr50070.jpg' style='zoom:80%'/>
+<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mr50070.png' style='zoom:80%'/>
 
 现在你就走出了Hadoop的新手村。
 

@@ -33,11 +33,11 @@ HDFS 是一个分布式文件系统，我们在前面也稍微讨论了一下集
 
 - 我们说过，NameNode保有元数据，是HDFS的管理者，这意味我们对HDFS的操作必须要先经过NameNode的许可，并获得要操作的数据的信息。
 
-- 同样，我们也说过，DataNode保有具体的数据，是HDFS指令的具体践行者。这意味着，读写指定的实际执行者是DataNode。
+- 同样，我们也说过，DataNode保有具体的数据，是HDFS指令的具体践行者。这意味着，读写指令的实际执行者是DataNode。
 
-- 我们还提到，Client与HDFS的具体数据的交互过程并经过NameNode。
+- 我们还提到，Client与HDFS的具体数据的交互过程并不经过NameNode。
 
-有了这三条，我们应该勾勒一个大概的交互的过程：
+有了这三条，我们应该可以勾勒出一个大概的交互的过程：
 
 - 首先，Client应当先和NameNode交互获得许可还有要读写的DataNode上的数据块信息。
 - 其次，拿到许可和数据块信息的Client就会去寻找具体的DataNode。
@@ -47,9 +47,45 @@ HDFS 是一个分布式文件系统，我们在前面也稍微讨论了一下集
 
 ### 一、HDFS的读流程
 
+所谓具体的读流程，应该就是在上述的三步交互过程的基础上添加一些属于读过程的具体细节。
 
+我们先看本地的操作系统中，一个简单的读流程应该是怎么样的。首先，我们需要知道文件的全路径名，通过全路径访问到这个文件，读取文件中的数据。在HDFS中这个过程应该是类似的。示意图如下：
 
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hdfs读.jpg" style="zoom:80%;" />
 
+------
 
+- 客户端首先需要获取到FileSystem的一个实例，这里就是HDFS对应的实例。
+- 获取到该实例后，客户端需要调用该实例的Open方法，获取到这个文件对应的输入流，在HDFS中就是DFSInputStream。
+  - 构建输入流的过程中，客户端会通过RPC远程调用方法，调用NameNode，获取要读取的文件对应的数据块的保存位置，以及副本的保存位置（其实也就是DataNode的地址）。在输入流中，所有的DataNode会按照网络拓扑结构，根据与客户端的距离进行简单排序。
+- 获取到输入流之后，客户端会调用read方法读取数据。输入流会按照排序结果，选择最近的DataNode建立连接，读取数据。
+- 若当前数据块读取完毕，HDFS会关闭与这个DataNode的连接，查找下一个数据块。查找过程还会通过NameNode进行，重复上述过程。
+- 读取结束，调用close方法，关闭输入流DFSInputStream。
 
+------
+
+### 二、HDFS的写流程
+
+写过程与上述过程类似。但是我们知道，一般写入权限要比读取权限要大，所有写入时我们应该进行权限检查。示意图如下：
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hdfs写.jpg" style="zoom:80%;" />
+
+------
+
+- 客户端首先需要获取到FileSystem的一个实例，这里就是HDFS对应的实例。
+- 客户端首先会调用create方法创建文件。当该方法被调用后，NameNode会进行一些检查，检查要写入文件是否存在（同名文件）；客户端是否拥有创建权限等。检查完成之后，需要在NameNode上创建文件信息，但是此时并没有进行实际的写入，因此，此时HDFS中并没有实际的数据，同理，NameNode上也没有数据块信息。create完成之后，会返回一个输出流DFSOutputStream给客户端。
+- 客户端会调用输出流的write方法向HDFS中写入数据。注意，此时数据并没有真正写入，数据首先会被分包，分包完成之后，这些数据会被写入输出流DFSOutputStream的一个内部Data队列中，数据分包接收完成之后，DFSOutputStream会向NameNode申请保存文件和副本数据块的若干个DataNode，这若干个DataNode会形成一个数据传输管道。
+- DFSOutputStream会依据网络拓扑结构排序，将数据传输给最近的DataNode，这个DataNode接收到数据包之后，将数据包传输给下一个DataNode。数据在各个DataNode上通过管道流动，而不是全部由输出流分发，这样可以减少传输开销。
+- 并且，因为DataNode位于不同的机器上，数据需要通过网络（socket）发送。为了保证数据的准确性，接收到数据的DataNode需要向发送者发送确认包（ACK）。对于某个数据块，只有当DFSOutputStream接收到所有DataNode的正确ACK，才能确认传输结束。DFSOutputStream内专门维护了一个等待ACK队列，这个队列保存已经进入管道传输数据、但是并未完全确认的数据包。
+- DFSOutputStream会不断传输数据包，直到所有的数据包传输都完成。
+- 客户端调用close方法，关闭传输通道。
+
+另外，在数据传输的过程中，如果发现某个DataNode失效了（未联通，ACK超时），那么HDFS会进行如下操作：
+
+1. 关闭数据传输管道
+2. 将等待ACK队列中的数据放到Data队列的头部
+3. 更新DataNode中所有数据块的版本，当失效的DataNode重启后，之前的数据块会因为版本不对而被清楚
+4. 在传输管道中删除失效的DataNode，重新建立管道并发送数据包
+
+------
 

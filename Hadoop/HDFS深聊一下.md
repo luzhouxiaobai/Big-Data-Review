@@ -181,3 +181,91 @@ HDFS高可用是配置了一对活动-备用（active-standby）NameNode。当�
 
 ## 第3.4节 Secondary NameNode如果进行Checkpoint
 
+其实至此，HDFS的原理基本上就讲了大半，当然，HDFS的精深也绝不是一篇博客性质的文章可以讲解清楚的，我仅仅提了一些比较重要（面试容易问；方便后面MapReduce的学习）的内容，本节仅仅是一些补充。
+
+在说具体的Checkpoint之前，我们先聊一下什么是HDFS的Checkpoint。
+
+### 一、HDFS的Checkpoint
+
+我们前面说过，HDFS的NameNode中包含fsimage和editlog。这里，fsimage称为元数据镜像，里面包含HDFS中数据到数据块的对应信息、副本信息等数据；editLog称为编辑日志，里面包含HDFS中进行的一些操作。
+
+每次NameNode启动时，都会加载保存的fsimage数据信息，之后再读取editlog，重建editlog中的操作。
+
+我们可以这样理解：
+
+- fsimage存有的是NameNode在某个时刻的状态
+- editlog保存的是fsimage保存到状态到NameNode当前处于的状态所需进行的操作。
+
+为什么要这样保存呢？
+
+- 假设只有fsimage，那么当NameNode进行操作时，每次必须将操作执行后，生成结果，才能将结果存入fsimage。倘若NameNode在操作执行完成之后没有来的将数据写入fsimage，那么数据就丢失了。
+- 假设只有editlog，那么每次操作执行前就将操作写入editlog，时间长了以后editlog会变得特别臃肿。每次恢复NameNode时，重现editlog中的日志就需要花费巨大的时间，这严重影响体验。
+- 因而，我们可以二者协同起来，fsimage做checkpoint，保存已经成功的操作，editlog仅保存还没有写入fsimage的操作。
+
+这样说，checkpoint的好处和来历我们也算讲清楚了。
+
+### 二、checkpoint过程
+
+ 前面我们也提过（在第一节Hadoop原理简述中第1.2节HDFS原理简述的第三段），fsimage和edit合并的工作并不是由NameNode自己完成的，而是有Secondary NameNode来完成的。那么Secondary NameNode节点的工作流程：
+
+------
+
+- 定期的通过远程方法获取NameNode节点上编辑日志的大小；
+
+- 如果NameNode节点上编辑日很小，就不需要合并NameNode上的fsimage文件和编辑日志； 
+- 通过远程接口启动一次检查点过程，这是名字节点需要创建一个新的编辑日志文件edits.new，后续对文件系统的任何修改都记录到这个新编辑日志里
+- 第二名字节点将Namenode上的fsimage文件和原编辑日志下载到本地，并在内存中合并，合并的结果输出为fsimage.ckpt；
+- 再次发起请求通知NameNode节点数据(fsimage.ckpt)已准备好，然后NameNode节点会下载fsimage.ckpt；
+- NameNode下载结束后，Secondary NameNode会通过远程调用（NameNodeProtocol.rollFsImage()）完成这次检查点，NameNode在响应该远程调用时，会用fsimage.ckpt覆盖原来的fsimage文件，形成新的命名空间镜像，同时将新的编辑日志edits.new改名为edits。
+
+------
+
+## 第3.5节 HDFS中几个简单的基本shell命令
+
+HDFS支持shell命令和Java API。这里仅介绍一点常用的shell命令。先看下Hadoop的软件分布
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop目录.png" style="zoom:80%;" />
+
+------
+
+（1）启动分布式文件系统HDFS
+
+```shell
+sbin/start-dfs.sh  #该命令位于sbin目录
+```
+
+（2）查看HDFS文件
+
+```shell
+bin/hdfs dfs -ls / #该命令位于bin目录
+```
+
+（3）上传文件到HDFS
+
+```shell
+bin/hdfs dfs -put [your_path] [hdfs_path]
+```
+
+将上述命令的[your_path]换成本地目录，hdfs_path换成hdfs中位置
+
+（4）从HDFS中下载文件
+
+```shell
+bin/hdfs dfs -get [hdfs_path] [your_path]
+```
+
+同上。
+
+（5）显示文件内容
+
+```shell
+bin/hdfs dfs -cat [hdfs_file]
+```
+
+至此，我们可以发现一个规律，这些命令其实都是
+
+```shell
+hdfs dfs -[linux_op] /
+```
+
+的格式，其中，[linux_op]表示linux中的操作。

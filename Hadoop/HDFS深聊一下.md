@@ -163,3 +163,21 @@ HDFS的写过程复杂了很多。首先获取文件系统的实例这个无可�
   - 写入文件之前，客户端需要先获得NameNode发放的租约，对于同一个文件，NameNode只会发放一个租约。
   - 如果NameNode发送租约后崩溃，则可以通过SSN恢复数据。
   - 如果客户端获得租约后崩溃也无妨。因为租约限制，时间到了之后，即便客户端不释放租约，也会被强制释放。
+
+### 三、HDFS的HA设计
+
+NameNode存在单点失效的问题。如果NameNode失效了，那么所有的客户端——包括MapReduce作业均无法读、写文件，因为NameNode是唯一存储元数据与文件到数据块映射的地方。
+
+HDFS高可用是配置了一对活动-备用（active-standby）NameNode。当活动NameNode（active NameNode）失效，备用NameNode（standby NameNode）就会接管它的任务并开始服务于来自客户端的请求，不会有任何明显的中断。
+
+在这样的情况下，要想从一个失效的NameNode中恢复，只需要“激活” standby NameNode，并配置DataNode和客户端以便使用这个新的NameNode。新的NameNode直到满足以下情形后才能响应服务：
+
+- 将命名空间（目录结构）的映像导入内存中。·
+- 重做编辑日志。·
+- 接收到足够多的来自DataNode的数据块报告并退出安全模式。对于一个大型并拥有大量文件和数据块的集群，NameNode的冷启动需要30分钟甚至更长时间。·
+- 系统恢复时间太长，也会影响到日常维护。
+
+在启用NameNode的场合，Secondary NameNode会被standby NameNode所替代。
+
+## 第3.4节 Secondary NameNode如果进行Checkpoint
+

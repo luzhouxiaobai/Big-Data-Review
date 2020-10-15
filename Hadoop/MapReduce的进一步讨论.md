@@ -11,7 +11,11 @@
 首先，我们假设我们拥有一篇初始的文章，我们需要统计文章中的所有的词语出现的个数。以一下这个小短文为例：
 
 ```
-This distribution includes cryptographic software.  The country in which you currently reside may have restrictions on the import, possession, use, and/or re-export to another country, of encryption software. BEFORE using any encryption software, please check your country's laws, regulations and policies concerning the import, possession, or use, and re-export of encryption software, to see if this is permitted. See <http://www.wassenaar.org/> for more information.
+This distribution includes cryptographic software.  The country in which you currently reside 
+may have restrictions on the import, possession, use, and/or re-export to another country, 
+of encryption software. BEFORE using any encryption software, please check your country's laws, 
+regulations and policies concerning the import, possession, or use, and re-export of encryption 
+software, to see if this is permitted. See <http://www.wassenaar.org/> for more information.
 ```
 
 细心的人已经发现了，这个是Hadoop安装包的README.txt。

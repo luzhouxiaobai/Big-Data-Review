@@ -86,9 +86,9 @@ ssh: connect to host localhost port 22: Connection refused
 则意味着没有安装SSH，我们需要先安装SSH。过程也很简单（Centos将apt命令改为yum命令）
 
 ```shell
-apt-get update
+sudo apt-get update
 sudo apt-get install openssh-server
-sudo apt-get install openssh-server
+sudo apt-get install openssh-client
 ```
 
 接着启动SSH

@@ -18,11 +18,14 @@ regulations and policies concerning the import, possession, or use, and re-expor
 software, to see if this is permitted. See <http://www.wassenaar.org/> for more information.
 ```
 
-细心的人已经发现了，这个是Hadoop安装包的README.txt。
+细心的人已经发现了，这个是Hadoop安装包的README.txt中的一部分内容。
 
 要统计这篇文章的词语方法很简单，读取文章，顺次统计每个词语出现的个数即可。**如果只有一个人，就一个人统计，如果有好几个人，就好几个人每个人分几行，先自己统计，然后将每个人的统计结果合并就可以了。**
 
-**哎哎哎！打住！发现了没有，这就是分治啊！把一个活分给好几个人干。**这也是MapReduce的想法，让原本需要一台机器做的事，分给好几个人做，这样不就快了嘛！
+**哎哎哎！打住！发现了没有，这就是分治啊！把一个活分给好几个人干。** 这也是MapReduce的想法，让原本需要一台机器做的事，分给好几个人做，这样不就快了嘛！
 
 ### 一、扯一扯Map
 
+有了上述的内容，我们可以进行下一步了。
+
+按照我们说的，我们应该将这个小短文分成几个部分啊。

@@ -122,7 +122,7 @@ Combiner组件并不是一个必须部分，用户可以按照实际的需求灵
 
 为了保证所有主键相同的键值对会传输到同一个Reducer节点，以便Reducer节点可以在不访问其他Reducer节点的情况下就可以计算粗最终的结果，我们需要对来自Map（如果有Combiner，就是Combiner之后的结果）中间键值对进行分区处理，Partitioner主要就是进行分区处理的。
 
-#### MapReduce 默认的分发规则
+#### Partitioner 默认的分发规则
 
 **根据 `key` 的 `hashcode%reduce task` 数来分发**，所以：**如果要按照我们自己的需求进行分组，则需要改写数据分发（分区）组件 Partitioner**
 
@@ -150,4 +150,29 @@ Combiner组件并不是一个必须部分，用户可以按照实际的需求灵
 
 - MapReduce 中会将 map 输出的 kv 对，按照相同 key 分组，然后分发给不同的 reducetask 默认的分发规则为:根据 key 的 hashcode%reduce task 数来分发，所以:如果要按照我们自 己的需求进行分组，则需要改写数据分发(分组)组件 Partitioner, 自定义一个 CustomPartitioner 继承抽象类:Partitioner
 
-- **因此， Partitioner 的执行时机， 是在Map输出 kv 对之后**
+- **因此， Partitioner 的执行时机， 是在Map输出 key-value 对之后**
+
+### 四、MapReduce中的Sort
+
+MapReduce中的很多流程都涉及到了排序，我们会在后面详细说明。
+
+从整个MapReduce的程序执行来看，整个过程涉及到了 **快排、归并排序、堆排** 三种排序方法。
+
+### 五、遛一遛Reduce
+
+Reduce会处理上游（Map，也可能有Combiner）的中间结果。
+
+需要注意的是，Map到Reduce整个过程中，键值的变化是不一样的
+
+1. 初始是文本内容，会被RecordReader处理为键值对 `<key-value>`
+2. 经过Map（也可能有Combiner）后，仍然是键值对形式 `<key-value>`
+3. 经过Partition，到达Reduce的结果是 `key - list(value)` 形式。所以在Reduce处理的value其实一个整体。
+
+Reduce会把所有的结果处理完成，输出到对应的输出路径。
+
+**弊端**
+
+MapReduce的Reduce处理结果最后都是需要落盘的，当粘结多个MapReduce代码时，无法有效利用内存。
+
+## 第4.3节 MapReduce中的shuffle
+

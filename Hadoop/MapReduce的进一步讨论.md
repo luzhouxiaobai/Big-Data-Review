@@ -180,7 +180,7 @@ shuffle翻译为中文就叫 ”洗牌“，把一组有一定规则的数据尽
 
 **本节内容参考了如下内容**
 
-[1] **MapReduce:详解Shuffle(copy sort merge)过程 ** https://blog.csdn.net/xiaolang85/article/details/8528892
+[1] **MapReduce:详解Shuffle(copy sort merge)过程** https://blog.csdn.net/xiaolang85/article/details/8528892
 
 [2] **MapReduce shuffle过程详解** https://blog.csdn.net/u014374284/article/details/49205885
 

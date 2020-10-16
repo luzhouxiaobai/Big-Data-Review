@@ -86,11 +86,30 @@ protected long computeSplitSize(long blockSize, long minSize,
 - blockSize ：默认为HDFS设置的文件存储BLOCK大小。注意：该值并不一定是唯一固定不变的。HDFS上不同的文件该值可能不同。故将文件划分成split的时候，对于每个不同的文件，需要获取该文件的blocksize。
 - splitSize ：根据公式，默认为blockSize 。
 
+从上述代码中可以看到，这个InputSize在 [minSize, maxSize] 之间。
+
 #### （2）这样，我们可以理一理划分逻辑
 
-- 遍历输入目录中的每个文件，拿到该文件
-- 计算文件长度，A:如果文件长度为0，如果`mapred.split.zero.file.skip=true`，则不划分split ; 如果`mapred.split.zero.file.skip`为false，生成一个length=0的split .B:如果长度不为0，跳到步骤3
-- 判断该文件是否支持split :如果支持，跳到步骤4;如果不支持，该文件不切分，生成1个split，split的length等于文件长度。
-- 根据当前文件，计算`splitSize`，本文中为100M
--  判断`剩余待切分文件大小/splitsize`是否大于`SPLIT_SLOP`(该值为1.1，代码中写死了) 如果true，切分成一个split，待切分文件大小更新为当前值-splitsize ，再次切分。生成的split的length等于splitsize； 如果false 将剩余的切到一个split里，生成的split length等于剩余待切分的文件大小。之所以需要判断`剩余待切分文件大小/splitsize`,主要是为了避免过多的小的split。比如文件中有100个109M大小的文件，如果`splitSize`=100M，如果不判断`剩余待切分文件大小/splitsize`，将会生成200个split，其中100个split的size为100M，而其中100个只有9M，存在100个过小的split。MapReduce首选的是处理大文件，过多的小split会影响性能。
+- 1）遍历输入目录中的每个文件，拿到该文件
+- 2）计算文件长度，A:如果文件长度为0，如果`mapred.split.zero.file.skip=true`，则不划分split ; 如果`mapred.split.zero.file.skip`为false，生成一个length=0的split .B:如果长度不为0，跳到步骤3
+- 3）判断该文件是否支持split :如果支持，跳到步骤4;如果不支持，该文件不切分，生成1个split，split的length等于文件长度。
+- 4）根据当前文件，计算`splitSize`。
+- 5）判断`剩余待切分文件大小/splitsize`是否大于`SPLIT_SLOP`(该值为1.1，代码中写死了) 如果true，切分成一个split，待切分文件大小更新为当前值-splitsize ，再次切分。生成的split的length等于splitsize； 如果false 将剩余的切到一个split里，生成的split length等于剩余待切分的文件大小。之所以需要判断`剩余待切分文件大小/splitsize`,主要是为了避免过多的小的split。比如文件中有100个109M大小的文件，如果`splitSize`=100M，如果不判断`剩余待切分文件大小/splitsize`，将会生成200个split，其中100个split的size为100M，而其中100个只有9M，存在100个过小的split。MapReduce首选的是处理大文件，过多的小split会影响性能。
 
+划分好Split之后，这些数据进入Map任务，按照用户设计处理逻辑进行处理。Map可以由用户定义设计处理逻辑。
+
+### 二、聊一聊Combiner
+
+Combiner组件并不是一个必须部分，用户可以按照实际的需求灵活的添加。Combiner组件的主要作用是 **减少网络传输负载，优化网络数据传输优化** 。
+
+当我们Map任务处理完成之后，上述的文本会变成一个一个的 **Key-Value** 对。
+
+```
+(This, 1)
+(distribution, 1)
+...
+```
+
+在没有Combiner组件前提下，这些键值对会直接传输到Reducer端，进行最后的统计工作。但是这一步是可以优化的，因为Map端仅仅是将每行的词拆分了，但是其实可以再做一步统计的。
+
+例如，我们假设在Map任务A这里出现了两次 （This, 1），我们可以做一次统计，将这个Map任务上的This做一次统计，生成（This, 2）。在大数据场合，千万个这样的相同词的合并会显著降低网络负载。

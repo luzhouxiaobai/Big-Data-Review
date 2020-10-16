@@ -113,3 +113,41 @@ Combiner组件并不是一个必须部分，用户可以按照实际的需求灵
 在没有Combiner组件前提下，这些键值对会直接传输到Reducer端，进行最后的统计工作。但是这一步是可以优化的，因为Map端仅仅是将每行的词拆分了，但是其实可以再做一步统计的。
 
 例如，我们假设在Map任务A这里出现了两次 （This, 1），我们可以做一次统计，将这个Map任务上的This做一次统计，生成（This, 2）。在大数据场合，千万个这样的相同词的合并会显著降低网络负载。
+
+**但是并不是所有的场合都适用Combiner，这个组件是可有可无的，用户需要按照自己的需求灵活决定** 。
+
+**因为Combiner可以存在，也可以不存在，所有，我们设计Combiner时，要保证Combiner的key-value和Map的key-value一致** 。
+
+### 三、 瞅一瞅Partitioner
+
+为了保证所有主键相同的键值对会传输到同一个Reducer节点，以便Reducer节点可以在不访问其他Reducer节点的情况下就可以计算粗最终的结果，我们需要对来自Map（如果有Combiner，就是Combiner之后的结果）中间键值对进行分区处理，Partitioner主要就是进行分区处理的。
+
+#### MapReduce 默认的分发规则
+
+**根据 `key` 的 `hashcode%reduce task` 数来分发**，所以：**如果要按照我们自己的需求进行分组，则需要改写数据分发（分区）组件 Partitioner**
+
+- **Partition 的 key value, 就是Mapper输出的key value**
+
+  ```java
+  public interface Partitioner<K2, V2> extends JobConfigurable {
+    
+    /** 
+     * Get the paritition number for a given key (hence record) given the total 
+     * number of partitions i.e. number of reduce-tasks for the job.
+     *   
+     * <p>Typically a hash function on a all or a subset of the key.</p>
+     *
+     * @param key 用来partition的key值。
+     * @param value 键值对的值。
+     * @param numPartitions 分区数目。
+     * @return the partition number for the <code>key</code>.
+     */
+    int getPartition(K2 key, V2 value, int numPartitions);
+  }
+  ```
+
+  **输入是Map的结果对<key, value>和Reducer的数目，输出则是分配的Reducer（整数编号）**。**就是指定Mappr输出的键值对到哪一个reducer上去**。系统缺省的Partitioner是HashPartitioner，它以key的Hash值对Reducer的数目取模，得到对应的Reducer。**这样保证如果有相同的key值，肯定被分配到同一个reducre上。如果有N个reducer，编号就为0,1,2,3……(N-1)**。
+
+- MapReduce 中会将 map 输出的 kv 对，按照相同 key 分组，然后分发给不同的 reducetask 默认的分发规则为:根据 key 的 hashcode%reduce task 数来分发，所以:如果要按照我们自 己的需求进行分组，则需要改写数据分发(分组)组件 Partitioner, 自定义一个 CustomPartitioner 继承抽象类:Partitioner
+
+- **因此， Partitioner 的执行时机， 是在Map输出 kv 对之后**

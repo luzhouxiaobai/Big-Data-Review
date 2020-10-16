@@ -176,3 +176,29 @@ MapReduce的Reduce处理结果最后都是需要落盘的，当粘结多个MapRe
 
 ## 第4.3节 MapReduce中的shuffle
 
+shuffle翻译为中文就叫 ”洗牌“，把一组有一定规则的数据尽量转换成一组无规则的数据，越随机越好。MapReduce中的Shuffle更像是洗牌的逆过程，把一组无规则的数据尽量转换成一组具有一定规则的数据。有些抽象，当前不理解也没关系，先了解一下shuffle的流程。
+
+**本节内容参考了如下内容**
+
+[1] **MapReduce:详解Shuffle(copy,sort,merge)过程 ** https://blog.csdn.net/xiaolang85/article/details/8528892
+
+[2] **MapReduce shuffle过程详解** https://blog.csdn.net/u014374284/article/details/49205885
+
+[3] **从零开始学Hadoop大数据分析** 6.2.5 Shuffle过程
+
+### 一、Shuffle概览
+
+Shuffle不是一个单独的任务，它是MapReduce执行中的步骤，Shuffle过程会涉及到上面谈到的Combiner、Sort、Partition三个过程。它横跨MapReduce中的Map端和Reduce端，因此，我们也会将Shuffle分为 **Map Shuffle** 和 **Reduce Shuffle** 。
+
+​    在Hadoop这样的集群环境中，大部分map task与reduce task的执行是在不同的节点上。当然很多情况下Reduce执行时需要跨节点去拉取其它节点上的map task结果。如果集群正在运行的job有很多，那么task的正常执行对集群内部的网络资源消耗会很严重。这种网络消耗是正常的，我们不能限制，能做的就是最大化地减少不必要的消耗。还有在节点内，相比于内存，磁盘IO对job完成时间的影响也是可观的。从最基本的要求来说，我们对Shuffle过程的期望可以有： 
+
+- 完整地从map task端拉取数据到reduce 端。
+- 在跨节点拉取数据时，尽可能地减少对带宽的不必要消耗。
+- 减少磁盘IO对task执行的影响。
+
+### 二、Map端的Shuffle
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/shuffle-spill.jpg" style="zoom:80%;" />
+
+
+

@@ -250,3 +250,47 @@ Copy过来的数据会先放入内存缓冲区中，如果内存缓冲区中能�
 
 ##### 以上就是Shuffle的整个流程。我只是整理了一个简明版的Shuffle流程，如果你想细致了解，可以看下上面给出的博文。就应届生面试来说，这些差不多可以应付了
 
+## 第4.4节 MapReduce中作业（Job）、任务（task）的一生概览
+
+**本节内容完全来自**
+
+**深入理解大数据：大数据处理与编程实践  机械工业出版社**
+
+没啥好说的，直接上内容
+
+### 一、作业
+
+1. 首先， 用户程序客户端通过作业客户端接口程序JobClient提交一个用户程序。
+2. 然后JobClient向JobTracker提交作业执行请求并获得一个Job ID。
+3.  JobClient同时也会将用户程序作业和待处理的数据文件信息准备好并存储在HDFS中。 
+4. JobClient正式向JobTracker提交和执行该作业。
+5.  JobTracker接受并调度该作业，并进行作业的初始化准备工作， 根据待处理数据的实际的分片情况， 调度和分配一定的Map节点来完成作业。
+6. JobTracker查询作业中的数据分片信息， 构建并准备相应的任务。
+7.  JobTracker启动TaskTracker节点开始执行具体的任务。
+8.  TaskTracker根据所分配的具体任务， 获取相应的作业数据。
+9.  TaskTracker节点创建所需要的Java虚拟机， 并启动相应的Map任务（或Reduce任务）的执行。 
+10. TaskTracker执行完所分配的任务之后， 若是Map任务， 则把中间结果数据输出到HDFS中；若是 Reduce任务，则输出最终结果
+11. TaskTracker向JobTracker报告所分配的任务完成。 若是Map任务完成并且后续还有 Reduce任务 则JobTracker会分配和启动 Reduce节点继续处理中间结果并输出最终结果。
+
+### 二、包含任务的细粒度作业流程
+
+#### 作业执行流程
+
+作业提交后成，总体上可以把作业的运行和生命周期分为三个阶段： 准备阶段(PREP)、 运行阶段(RUNNING)和结束阶段(FINISHED)。
+
+在准备阶段， 作业从初始状态NEW开始， 进入PREP.INITIALIZING状态进行初始化 初始化所做的主要工作是读取输入数据块描述信息， 并创建所有的Map任务和Reduce任务。初始化成功 后，进入PREP.INITIALIZED状态。此后，一个特殊的作业初始化任务(job setup task) 被启动，以创建作业运行环境，此任务完成后，作业准备阶段结束 作业真正进入了运行阶段 。
+
+在运行阶段作业首先处在 RUNNING.RUN_WAIT状态下等待任务被调度。 当第一个任务开始执行时，作业进入RUNNING.RUNNING_TASKS， 以进行 真正的计算。 当所有的Map任务和Reduce任务执行完成后， 作业进入RUNNING.SUC_WAIT状态。此时， 另一个特殊的作业清理任务(job cleanup task)被启动， 清理作业的运行环境， 作业进入结束阶段 。在结束阶段， 作业清理任务完成后， 作业最终到达成功状态SUCCEEDED, 至此， 整个 作业的 生命周期结束 。在整个过程中，各个状态下作业有可能被客户主动杀死， 最终进入KILLED状态；也有可，能在执行中因各种因素而失败， 最终进入FAILED状态。
+
+#### 任务执行流程
+
+任务(Task)是HadoopMapReduce框架进行并行化计算的基本单位。 需要说明的一点是：任务是一个逻辑上的概念， 在MapReduce并行计算框架的实现中布千JobTracker和TaskTracker两端， 分别对应TasklnProgress和TaskTracker.TasklnProgress两个对象。当一个作业提交到 Hadoop系统时，JobTracker对作业进行初始化， 作业内的任务(TasklnProgress)被全部创建好，等待 TaskTracker来请求任务， 我们对任务 的分析就从这里开始 。
+
+1. JobTracker为作业创建一个新 的TasklnProgress任务 ；此时Task处在 UNASSIGNED状态。 
+2. TaskTracker 经过一个心跳周期 后， 向JobTracker发送一次心跳消息(heartbeat), 请求分配任务， JobTracker收到请求 后分配个 TasklnProgress任务 给TaskTracker 。 这是第一次心跳通信， 心跳间隔一般为3秒。
+3.  TaskTracker收到任务 后， 创建 一个对应的 TaskTracker. TasklnProgress对象， 并启动独立的Child 进程去执行这个任务 。此时 TaskTracker已将任务状态更新为 RUNNING 。
+4. 又经过一个心跳周期， TaskTracker向JobTracker报告任务状态的改变， JobTracker也将任务状态更新为 RUNNIN1G 。 这是第二次心跳通信 。
+5. 经过一定时间，任务在Child进程内执行完成，Child进程向TaskTracker进程发出通知， 任务状态变为 COMMIT_PENDING (任务在执行期间 TaskTracker 还会周期性地向JobTracker 发送心跳信息 ）。
+6.  TaskTracker 再次向 JobTracker 发送心跳信息报告任务状态的改变， JobTracker 收到消息后也将任务状态更新为 COMMIT—PENDING, 并返回确认消息， 允许提交。
+7. TaskTracker 收到确认可以提交的消息后将结果提交， 并把任务状态更新为SUCCEEDED。
+8.  一个心跳周期后 TaskTracker 再次发送心跳消息， JobTracker 收到消息后也更新任务的状态为 SUCCEEDED, 一个任务至此结束。

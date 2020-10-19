@@ -37,7 +37,7 @@ software, to see if this is permitted. See <http://www.wassenaar.org/> for more 
 
 - 初始时，是上述的一个文本。MapReduce接收到作业输入后，会先进行数据拆分。
 - 数据拆分完成之后，会有多个 **小文本** 数据，每个小文本都会作为一个Map任务的输入。这样一个大的MapReduce作业，会被分解为多个小的Map任务。
-- Combiner会处理Map生成的数据，需要数据的时，此时Map生产的仅仅是中间结果。Combiner是一个可选的组件，用户不设置，他就不存在。
+- Combiner会处理Map生成的数据，需要注意的是，此时Map生产的仅仅是中间结果。Combiner是一个可选的组件，用户不设置，他就不存在。
 - 之后，数据会到达Partitioner，Partitioner组件会将中间数据按照哈希函数的对应规则，将中间结果分配到对应的Reducer所在节点上。
 - Reducer会处理中间数据，得到最终的结果。
 
@@ -51,9 +51,9 @@ software, to see if this is permitted. See <http://www.wassenaar.org/> for more 
 
 按照我们说的，我们应该将这个小短文分成几个部分。也就是图中的数据划分。
 
-#### （1）如果进行数据划分
+#### （1）首先进行数据划分
 
-当我们开启一个MapReduce程序，一般传入的输入都是一个体积巨大的数据。MapReduce接收到数据后，需要对数据进行划分。通俗来将，就是我们前文说的，我们该如果将一个小短文划分成多行，分配个多个人进行统计。
+当我们开启一个MapReduce程序，一般传入的输入都是一个体积巨大的数据。MapReduce接收到数据后，需要对数据进行划分。通俗来讲，就是我们前文说的，我们该如果将一个小短文划分成多行，分配个多个人进行统计。
 
 MapReduce中有一个InputFormat类，它会完成如下三个任务：
 

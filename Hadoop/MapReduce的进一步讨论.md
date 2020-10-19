@@ -228,6 +228,25 @@ Merge会扫描本地文件，找到所有的的Spill文件，这些Spill文件�
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/merge流程.jpg" style="zoom:80%;" />
 
-然后为merge过程创建一个叫file.out的文件和一个叫file.out.Index的文件用来存储最终的输出和索引，一个partition一个partition的进行合并输出。对于某个partition来说，从索引列表中查询这个partition对应的所有索引信息，每个对应一个段插入到段列表中。也就是这个partition对应一个段列表，记录所有的Spill文件中对应的这个partition那段数据的文件名、起始位置、长度等等。
+然后为merge过程会一个partition一个partition的进行合并输出。对于某个partition来说，从索引列表中查询这个partition对应的所有的键值对 **key-value** ，也就是一个Segment的数据。
 
-然后对这个partition对应的所有的segment进行合并，目标是合并成一个segment。当这个partition对应很多个segment时，会分批地进行合并：先从segment列表中把第一批取出来，以key为关键字放置成最小堆，然后从最小堆中每次取出最小的输出到一个临时文件中，这样就把这一批段合并成一个临时的段，把它加回到segment列表中；再从segment列表中把第二批取出来合并输出到一个临时segment，把其加入到列表中；这样往复执行，直到剩下的段是一批，输出到最终的文件中。最终的索引数据仍然输出到Index文件中。
+然后对这个partition对应的所有的segment进行合并，目标是合并成一个segment。当这个partition对应很多个segment时，会分批地进行合并：先从segment列表中把第一批取出来，以key为关键字放置成最小堆，然后从最小堆中每次取出最小的输出到一个临时文件中，这样就把这一批段合并成一个临时的段，把它加回到segment列表中；再从segment列表中把第二批取出来合并输出到一个临时segment，把其加入到列表中；这样往复执行，直到剩下的段是一批，输出到最终的文件中。
+
+这样Map端的任务就算是完成了。
+
+### 三、Reduce端的Shuffle
+
+在Reduce端，shuffle主要分为复制Map输出、排序合并两个阶段。
+
+#### Copy
+
+Reduce任务通过HTTP向各个Map任务拖取它所需要的数据。Map任务成功完成后，会通知父TaskTracker状态已经更新，TaskTracker进而通知JobTracker（这些通知在心跳机制中进行）。所以，对于指定作业来说，JobTracker能记录Map输出和TaskTracker的映射关系。Reduce会定期向JobTracker获取Map的输出位置，一旦拿到输出位置，Reduce任务就会从此输出对应的TaskTracker上复制输出到本地，而不会等到所有的Map任务结束。
+
+#### Merge Sort
+
+Copy过来的数据会先放入内存缓冲区中，如果内存缓冲区中能放得下这次数据的话就直接把数据写到内存中，即**内存到内存merge**。Reduce要向每个Map去拖取数据，在内存中每个Map对应一块数据，当内存缓存区中存储的Map数据占用空间达到一定程度的时候，开始启动内存中merge，把内存中的数据merge输出到磁盘上一个文件中，即**内存到磁盘merge**。在将buffer中多个map输出合并写入磁盘之前，如果设置了Combiner，则会化简压缩合并的map输出。Reduce的内存缓冲区可通过mapred.job.shuffle.input.buffer.percent配置，默认是JVM的heap size的70%。内存到磁盘merge的启动门限可以通过mapred.job.shuffle.merge.percent配置，默认是66%。
+
+当属于该reducer的map输出全部拷贝完成，则会在reducer上生成多个文件（如果拖取的所有map数据总量都没有内存缓冲区，则数据就只存在于内存中），这时开始执行合并操作，即**磁盘到磁盘merge**，Map的输出数据已经是有序的，Merge进行一次合并排序，所谓Reduce端的sort过程就是这个合并的过程。一般Reduce是一边copy一边sort，即copy和sort两个阶段是重叠而不是完全分开的。最终Reduce shuffle过程会输出一个整体有序的数据块。
+
+##### 以上就是Shuffle的整个流程。我只是整理了一个简明版的Shuffle流程，如果你想细致了解，可以看下上面给出的博文。就应届生面试来说，这些差不多可以应付了
+

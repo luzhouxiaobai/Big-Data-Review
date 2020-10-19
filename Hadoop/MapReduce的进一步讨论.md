@@ -294,3 +294,18 @@ Copy过来的数据会先放入内存缓冲区中，如果内存缓冲区中能�
 6.  TaskTracker 再次向 JobTracker 发送心跳信息报告任务状态的改变， JobTracker 收到消息后也将任务状态更新为 COMMIT—PENDING, 并返回确认消息， 允许提交。
 7. TaskTracker 收到确认可以提交的消息后将结果提交， 并把任务状态更新为SUCCEEDED。
 8.  一个心跳周期后 TaskTracker 再次发送心跳消息， JobTracker 收到消息后也更新任务的状态为 SUCCEEDED, 一个任务至此结束。
+
+##### 抛个问题，有了上面的知识之后，那么MapReduce是如何确定Map和Reduce的数量呢？
+
+首先，还记得前面介绍Map的时候，谈到了分片（Split），我们说一个分片就对应一个Map任务。所以一般来讲，Map task的数量应该是和Split息息相关的。
+
+###### Map数量
+
+map的数量通常是由hadoop集群的DFS块大小确定的，也就是输入文件的总块数，正常的map数量的并行规模大致是每一个Node是10~100个，对于CPU消耗较小的作业可以设置Map数量为300个左右，但是由于hadoop的每一个任务在初始化时需要一定的时间，因此比较合理的情况是每个map执行的时间至少超过1分钟。具体的数据分片是这样的，InputFormat在默认情况下会根据hadoop集群的DFS块大小进行分片，每一个分片会由一个map任务来进行处理，当然用户还是可以通过参数mapred.min.split.size参数在作业提交客户端进行自定义设置。还有一个重要参数就是mapred.map.tasks，这个参数设置的map数量仅仅是一个提示，只有当InputFormat 决定了map任务的个数比mapred.map.tasks值小时才起作用。同样，Map任务的个数也能通过使用JobConf 的conf.setNumMapTasks(int num)方法来手动地设置。这个方法能够用来增加map任务的个数，但是不能设定任务的个数小于Hadoop系统通过分割输入数据得到的值。当然为了提高集群的并发效率，可以设置一个默认的map数量，当用户的map数量较小或者比本身自动分割的值还小时可以使用一个相对交大的默认值，从而提高整体hadoop集群的效率。
+
+###### reduce数量
+
+reduce在运行时往往需要从相关map端复制数据到reduce节点来处理，因此相比于map任务。reduce节点资源是相对比较缺少的，同时相对运行较慢，正确的reduce任务的个数应该是0.95或者1.75 *（节点数 ×mapred.tasktracker.tasks.maximum参数值）。如果任务数是节点个数的0.95倍，那么所有的reduce任务能够在 map任务的输出传输结束后同时开始运行。如果任务数是节点个数的1.75倍，那么高速的节点会在完成他们第一批reduce任务计算之后开始计算第二批 reduce任务，这样的情况更有利于负载均衡。同时需要注意增加reduce的数量虽然会增加系统的资源开销，但是可以改善负载匀衡，降低任务失败带来的负面影响。同样，Reduce任务也能够与 map任务一样，通过设定JobConf 的conf.setNumReduceTasks(int num)方法来增加任务个数。有些作业不需要进行归约进行处理，那么就可以设置reduce的数量为0来进行处理，这种情况下用户的作业运行速度相对较高，map的输出会直接写入到 SetOutputPath(path)设置的输出目录，而不是作为中间结果写到本地。同时Hadoop框架在写入文件系统前并不对之进行排序。
+
+
+

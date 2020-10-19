@@ -299,6 +299,10 @@ Copy过来的数据会先放入内存缓冲区中，如果内存缓冲区中能�
 
 首先，还记得前面介绍Map的时候，谈到了分片（Split），我们说一个分片就对应一个Map任务。所以一般来讲，Map task的数量应该是和Split息息相关的。
 
+**以下内容来自**
+
+[1] **如何确定 Hadoop map和reduce的个数--map和reduce数量之间的关系是什么？** https://blog.csdn.net/u013063153/article/details/73823963
+
 ###### Map数量
 
 map的数量通常是由hadoop集群的DFS块大小确定的，也就是输入文件的总块数，正常的map数量的并行规模大致是每一个Node是10~100个，对于CPU消耗较小的作业可以设置Map数量为300个左右，但是由于hadoop的每一个任务在初始化时需要一定的时间，因此比较合理的情况是每个map执行的时间至少超过1分钟。具体的数据分片是这样的，InputFormat在默认情况下会根据hadoop集群的DFS块大小进行分片，每一个分片会由一个map任务来进行处理，当然用户还是可以通过参数mapred.min.split.size参数在作业提交客户端进行自定义设置。还有一个重要参数就是mapred.map.tasks，这个参数设置的map数量仅仅是一个提示，只有当InputFormat 决定了map任务的个数比mapred.map.tasks值小时才起作用。同样，Map任务的个数也能通过使用JobConf 的conf.setNumMapTasks(int num)方法来手动地设置。这个方法能够用来增加map任务的个数，但是不能设定任务的个数小于Hadoop系统通过分割输入数据得到的值。当然为了提高集群的并发效率，可以设置一个默认的map数量，当用户的map数量较小或者比本身自动分割的值还小时可以使用一个相对交大的默认值，从而提高整体hadoop集群的效率。

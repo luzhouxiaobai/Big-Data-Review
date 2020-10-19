@@ -177,7 +177,7 @@ HDFS高可用是配置了一对活动-备用（active-standby）NameNode。当�
 - 接收到足够多的来自DataNode的数据块报告并退出安全模式。对于一个大型并拥有大量文件和数据块的集群，NameNode的冷启动需要30分钟甚至更长时间。·
 - 系统恢复时间太长，也会影响到日常维护。
 
-在启用NameNode的场合，Secondary NameNode会被standby NameNode所替代。
+在启用HA的场合，Secondary NameNode会被standby NameNode所替代。
 
 ## 第3.4节 Secondary NameNode如果进行Checkpoint
 

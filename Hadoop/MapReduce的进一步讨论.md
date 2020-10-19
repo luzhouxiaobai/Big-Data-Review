@@ -2,6 +2,11 @@
 
 我们前面提了一嘴MapReduce。说它是一个采用了分治思想的分布式计算框架，本节我们就进一步细致讨论一下MapReduce。
 
+大数据背景下，数据量巨大，这点没有问题。数据巨大带来的问题就是计算耗时、传输耗时。
+
+- 计算耗时无法避免，因为那么大的数据就是需要进行计算的。我们只能想办法提升算力或者优化算法来提升计算的速度。
+- 传输耗时却可以避免，或者说优化。MapReduce中采用了计算向数据偏移的策略，尽量维持数据不动，在本地计算，这叫数据本地性。但是很多场合我们无法避免移动数据，但是我们也应该尽量选择靠近的节点。
+
 ## 第4.1节 MapReduce的并行化计算模型
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mr并行编程.jpg" style="zoom:80%;" />
@@ -116,9 +121,9 @@ Combiner组件并不是一个必须部分，用户可以按照实际的需求灵
 
 **但是并不是所有的场合都适用Combiner，这个组件是可有可无的，用户需要按照自己的需求灵活决定** 。
 
-**因为Combiner可以存在，也可以不存在，所有，我们设计Combiner时，要保证Combiner的key-value和Map的key-value一致** 。
+**因为Combiner可以存在，也可以不存在，所有，我们设计Combiner时，要保证Combiner的key-value和Map的key-value一致** 。这也意味着，若你设计的Combiner改变了原先Map的键值对设计，那么你的Combiner设计就是不合法的。
 
-### 三、 瞅一瞅Partitioner
+### 三、瞅一瞅Partitioner
 
 为了保证所有主键相同的键值对会传输到同一个Reducer节点，以便Reducer节点可以在不访问其他Reducer节点的情况下就可以计算粗最终的结果，我们需要对来自Map（如果有Combiner，就是Combiner之后的结果）中间键值对进行分区处理，Partitioner主要就是进行分区处理的。
 
@@ -203,5 +208,26 @@ Shuffle不是一个单独的任务，它是MapReduce执行中的步骤，Shuffle
 如上图所示，在Map端的shuffle过程是对Map的结果进行分区、排序、分割，然后将属于同一划分（分区）的输出合并在一起并写在磁盘上，最终得到一个**分区有序**的文件，分区有序的含义是Map输出的键值对按分区进行排列，具有相同partition值的键值对存储在一起，每个分区里面的键值对又按key值进行升序排列（默认），这里的partition值是指利用Partitioner.getPartition得到的结果，他也是Partitioner分区的依据。上述流程还可以用如下图进行表示：
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/shuffle-map.jpg" style="zoom:80%;" />
 
+#### Collector
 
+Map的输出结果是由collector处理的，每个Map任务不断地将键值对输出到在内存中构造的一个环形数据结构Collector中。Collector的大小可以通过io.sort.mb设置，默认大小为100M。该空间不够用就会触发Spill方法。但是一般不会将整个空间占满才触发Spill方法，而是会设置一个一个Spill门限，默认为0.8。当当前占用空间达到Collector空间的80%，就会触发Spill方法。
 
+#### Sort
+
+Spill被触发后，并不会直接将键值对溢出，而是先调用SortAndSpill方法，按照partition值和key两个关键字升序排序。这样的排序的结果是，键值对 **key-value** 按照partition值聚簇在一起，同一个partition值，按照key值有序。
+
+#### Spill
+
+Spill线程为这次Spill过程创建一个磁盘文件：从所有的本地目录中轮训查找能存储这么大空间的目录，找到之后在其中创建一个类似于“spill12.out”的文件。Spill线程根据排过序键值对 **key-value** 挨个partition的把数据吐到这个文件中，一个partition对应的数据吐完之后顺序地吐下个partition，直到把所有的partition遍历完。一个partition在文件中对应的数据也叫段(segment)。在这个过程中如果用户配置了combiner类，那么在写之前会先调用combineAndSpill方法，对结果进行进一步合并后再写出。Combiner会优化MapReduce的中间结果，所以它在整个模型中会多次使用。
+
+#### Merge
+
+Map任务如果输出数据量很大，可能会进行好几次Spill，会产生很多Spill??.out类型的文件，分布在不同的磁盘上。这个时候，我们就需要将所有的文件合并的Merge过程。
+
+Merge会扫描本地文件，找到所有的的Spill文件，这些Spill文件都是局部有序的（同一个Spill文件按照partition值有序，同一个partition值内按照key值有序）。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/merge流程.jpg" style="zoom:80%;" />
+
+然后为merge过程创建一个叫file.out的文件和一个叫file.out.Index的文件用来存储最终的输出和索引，一个partition一个partition的进行合并输出。对于某个partition来说，从索引列表中查询这个partition对应的所有索引信息，每个对应一个段插入到段列表中。也就是这个partition对应一个段列表，记录所有的Spill文件中对应的这个partition那段数据的文件名、起始位置、长度等等。
+
+然后对这个partition对应的所有的segment进行合并，目标是合并成一个segment。当这个partition对应很多个segment时，会分批地进行合并：先从segment列表中把第一批取出来，以key为关键字放置成最小堆，然后从最小堆中每次取出最小的输出到一个临时文件中，这样就把这一批段合并成一个临时的段，把它加回到segment列表中；再从segment列表中把第二批取出来合并输出到一个临时segment，把其加入到列表中；这样往复执行，直到剩下的段是一批，输出到最终的文件中。最终的索引数据仍然输出到Index文件中。

@@ -10,11 +10,11 @@
 - 由于Hadoop原生不支持Windows，所以需要一个win工具包，你可以从[此处](https://github.com/steveloughran/winutils)下载。将对应版本或者相近版本的 **hadoop/bin** 目录下的文件全部复制到刚刚解压的Hadoop文件的bin目录下即可。
 - 配置Window下的Hadoop路径。右键点击 `我的电脑` ，打开 `属性` , 打开 `高级系统设置` , 打开 `环境变量` , 在 `系统变量` 栏，创建 `HADOOP_HOME` 环境变量，值为你的Hadoop路径。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop_home.jpg" style="zoom:80%;" />
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop_home.png" style="zoom:80%;" />
 
 之后，在 `系统变量` 栏的 `Path` 条目下，添加的你的Hadoop路径的bin路径。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop_path.jpg" style="zoom:80%;" />
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop_path.png" style="zoom:80%;" />
 
 以上步骤完成之后，就完成了在Windows下开发MapReduce代码的必备步骤。
 

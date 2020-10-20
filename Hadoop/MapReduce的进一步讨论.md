@@ -214,7 +214,7 @@ Map的输出结果是由collector处理的，每个Map任务不断地将键值�
 
 #### Sort
 
-Spill被触发后，并不会直接将键值对溢出，而是先调用SortAndSpill方法，按照partition值和key两个关键字升序排序。这样的排序的结果是，键值对 **key-value** 按照partition值聚簇在一起，同一个partition值，按照key值有序。
+Spill被触发后，并不会直接将键值对溢出，而是先调用SortAndSpill方法，按照partition值和key两个关键字升序排序。这样的排序的结果是，键值对 **key-value** 按照partition值聚簇在一起，同一个partition值，按照key值有序。这里的排序使用的是快速排序。
 
 #### Spill
 

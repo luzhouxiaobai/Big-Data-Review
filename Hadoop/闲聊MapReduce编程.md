@@ -68,7 +68,7 @@ software, to see if this is permitted. See <http://www.wassenaar.org/> for more 
 #### Map
 
 ```java
-public static class WordsMapper extends Mapper<Object,  //输入数据的Key
+public static class TokenizerMapper extends Mapper<Object,  //输入数据的Key
             Text,   //输入数据的value
             Text,   //输出数据的key
             IntWritable  //输出数据的value
@@ -141,7 +141,7 @@ MRJobConfig包含了该Job的一系列属性。我们得知，Context是用来�
 #### Reduce
 
 ```java
-public static class WordsReducer extends Reducer<Text, //输入的key
+public static class IntSumReducer extends Reducer<Text, //输入的key
             IntWritable,  //输入的value
             Text,  //输出的key
             IntWritable  //输出的value
@@ -159,9 +159,116 @@ public static class WordsReducer extends Reducer<Text, //输入的key
             result.set(count);
             context.write(key, result);
         }
-
     }
 ```
 
+Reduce代码同上类似，需要继承MapReduce中的Reducer类。尖括号中给出的类型，输入的 **Key-Value** 类型和Mapper中的输出对应。
 
+还记得前一节，我们曾指出，到达Reduce的数据是 **Key-list(Value)** 格式。所以你看，reduce函数中的 **value** 是 迭代器类型 **Iterable<IntWritable>** 。
+
+```java
+public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
+
+  public abstract class Context 
+    implements ReduceContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
+  }
+}
+```
+
+Reducer的Context继承自ReduceContext，如果你点下去，会发现它也是继承自MRJocConfig。但是在一层层的继承中，添加了不同于MapContext的内容。
+
+#### WordCount
+
+有了上述代码，再写好驱动程序即可。
+
+```java
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+import java.io.IOException;
+import java.util.StringTokenizer;
+
+public class WordCount {
+
+    public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable> {
+        private IntWritable one = new IntWritable(1);
+        private Text word = new Text();
+
+        @Override
+        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+            StringTokenizer itr = new StringTokenizer(value.toString());
+            while (itr.hasMoreTokens()) {
+                word.set(itr.nextToken());
+                context.write(word, one);
+            }
+        }
+    }
+
+    public static class IntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+        private IntWritable result = new IntWritable();
+
+        @Override
+        public void reduce(Text key, Iterable<IntWritable> value, Context context)
+            throws IOException, InterruptedException {
+            int count = 0;
+            for (IntWritable val: value) {
+                count += val.get();
+            }
+            result.set(count);
+            context.write(key, result);
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "word count");
+        job.setJarByClass(WordCount.class);
+        job.setMapperClass(TokenizerMapper.class);
+        job.setCombinerClass(IntSumReducer.class);
+        job.setReducerClass(IntSumReducer.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+        FileInputFormat.addInputPath(job, new Path(args[0])); //输入文件所在路径
+        FileOutputFormat.setOutputPath(job, new Path(args[1])); //输出文件所在路径
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
+```
+
+上文展示的就是完整的MapReduce代码，也就是一个Job。
+
+在 `main` 函数中，我们看到输入文件路径是第一个参数，输出文件路径是第二个参数。在IDEA的配置方式如下图：
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/idea1.png" style="zoom:80%;" />
+
+如果点开后发现不一致，可以先运行代码（会报错，但是之后就正常了。）
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/idea2.png" style="zoom:80%;" />
+
+输入的参数就是对应的 `args[0]` 和 `args[1]` 两个参数用空格隔开。需要注意的是，输出的路径必须不存在，不然会报错提示该路径已经存在。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/output.png" style="zoom:80%;" />
+
+上图展示的部分结果。如果你足够仔细，你会发现结果是按照Key值排序的。这里是不是和前面的MapReduce的讲解对应上了。
+
+## 第5.2 节 Jar运行
+
+### 一、打Jar包的方法
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar1.png" style="zoom:80%;" />
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar2.png" style="zoom:80%;" />
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar3.png" style="zoom:80%;" />
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar4.png" style="zoom:80%;" />
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar5.png" style="zoom:80%;" />
 

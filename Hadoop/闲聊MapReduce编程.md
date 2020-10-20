@@ -67,3 +67,101 @@ software, to see if this is permitted. See <http://www.wassenaar.org/> for more 
 
 #### Map
 
+```java
+public static class WordsMapper extends Mapper<Object,  //输入数据的Key
+            Text,   //输入数据的value
+            Text,   //输出数据的key
+            IntWritable  //输出数据的value
+            > {
+
+        private IntWritable one = new IntWritable(1);
+        private Text word = new Text();
+
+        @Override
+        public void map(Object key, //输入数据的Key
+                        Text value, //输入数据的value
+                        Context context  // 用于记录Map程序执行的上下文，
+        ) throws IOException, InterruptedException {
+            StringTokenizer itr = new StringTokenizer(value.toString());
+            while (itr.hasMoreTokens()) {
+                word.set(itr.nextToken());
+                context.write(word, one);
+            }
+        }
+    }
+```
+
+我们需要自己继承MapReduce类，重写map函数，自定义处理逻辑。这里的处理很简单，就是接收输入，进行分割，组合成键值对的形式。
+
+还记得上一节将MapReduce时提过，InputFormat会将输入数据处理成坚持对的形式。他会按照用户给出的类型，对数据进行处理。初始文本对于Java来说就是一堆字符串。我们以行号（Object）为Key，该行对应的值为Value进行处理。
+
+Context的理解有些复杂，我们尽量网简单处理解，秉承够用就行的思想，我们先看一下Map的源码。
+
+```java
+public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
+
+  /**
+   * The <code>Context</code> passed on to the {@link Mapper} implementations.
+   */
+  public abstract class Context
+    implements MapContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
+  }
+  
+}
+```
+
+发现，Map中的Context继承自MapContext。我们一路走下去，会发现继承的最上层父类。
+
+```java
+public interface MRJobConfig {
+
+  // Put all of the attribute names in here so that Job and JobContext are
+  // consistent.
+  public static final String INPUT_FORMAT_CLASS_ATTR = "mapreduce.job.inputformat.class";
+
+  public static final String MAP_CLASS_ATTR = "mapreduce.job.map.class";
+
+  public static final String MAP_OUTPUT_COLLECTOR_CLASS_ATTR
+                                  = "mapreduce.job.map.output.collector.class";
+
+  public static final String COMBINE_CLASS_ATTR = "mapreduce.job.combine.class";
+
+  public static final String REDUCE_CLASS_ATTR = "mapreduce.job.reduce.class";
+
+  public static final String OUTPUT_FORMAT_CLASS_ATTR = "mapreduce.job.outputformat.class";
+
+  public static final String PARTITIONER_CLASS_ATTR = "mapreduce.job.partitioner.class";
+  
+  // .....
+}
+```
+
+MRJobConfig包含了该Job的一系列属性。我们得知，Context是用来感知该作业的上下文的。如果还是不理解，你就认为Context中包含了该Job的属性信息，我们可以通过调用Context的方法得到或者写入一系列的数据。
+
+#### Reduce
+
+```java
+public static class WordsReducer extends Reducer<Text, //输入的key
+            IntWritable,  //输入的value
+            Text,  //输出的key
+            IntWritable  //输出的value
+            > {
+
+        private IntWritable result = new IntWritable();
+
+        @Override
+        public void reduce(Text key, Iterable<IntWritable> value, Context context)
+            throws IOException, InterruptedException {
+            int count = 0;
+            for (IntWritable val: value) {
+                count += val.get();
+            }
+            result.set(count);
+            context.write(key, result);
+        }
+
+    }
+```
+
+
+

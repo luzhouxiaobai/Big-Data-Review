@@ -177,7 +177,7 @@ Reduce会把所有的结果处理完成，输出到对应的输出路径。
 
 **弊端**
 
-MapReduce的Reduce处理结果最后都是需要落盘的，当粘结多个MapReduce代码时，无法有效利用内存。
+MapReduce的Reduce处理结果最后都是需要落盘的，当一个project中有多个MapReduce作业（Job）时，无法有效利用内存。
 
 ## 第4.3节 MapReduce中的shuffle
 

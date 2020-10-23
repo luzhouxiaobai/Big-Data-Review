@@ -272,3 +272,51 @@ public class WordCount {
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar5.png" style="zoom:80%;" />
 
+之后会发现，出现一个 `out` 文件夹，里面就是刚刚操作完成之后的Jar包。
+
+### 二、Jar包的运行方式
+
+- 先将待会计算的数据上传到HDFS中
+
+  ```shell
+  hdfs dfs -put [local_path] [hdfs_path] # hdfs命令在Hadoop的bin目录下
+  ```
+
+- 然后运行Jar包
+
+  ```shell
+  hadoop jar [jar_name] [main_function] [args[0]] [args[1]] # hadoop命令也在Hadoop的bin目录下
+  ```
+
+你的输入目录，也就是 **args[0]** 应当是在HDFS中的。输出目录 **args[1]** 应当事先不存在。
+
+但是我在WSL中，按照上述的方法，提交Jar包运行会提示Container被kill掉了。打开yarn的8088端口，提示信息如下：
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/8088.png" style="zoom:80%;" />
+
+原因是说占用的内存过多了。Demo是官网给的例子。按理说不该存在问题。
+
+如果你也遇到这样的问题，可以修改你的配置文件：
+
+**mapred-site.xml**
+
+```xml
+<configuration>
+   <property>
+       <name>mapred.job.tracker</name>
+       <value>localhost:9001</value>
+   </property>
+</configuration>
+```
+
+**yarn-site.xml**
+
+```xml
+<configuration>
+<!--就是空-->
+</configuration>
+```
+
+配置的意思也很清楚，就是不要配置yarn了。
+
+这样修改后，再重新提交。就可以看到结果了。遗憾的是，这样的配置方法，我们就看不到8088端口给出的信息了（8088端口给出的yarn的信息）。至于原因，日志的分析会涉及到 **yarn** 的原理，我们就先放一放。需要指出的是，我在Vmware中用这样的配置运行Jar包则没有出现问题。

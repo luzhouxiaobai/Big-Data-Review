@@ -37,11 +37,111 @@ MapReduce的弊端促使科学家探索新的计算模式。在后Hadoop时代�
 
 ## 第1.2节 Spark的安装
 
-### 一、在Linux的安装
+### 一、Spark安装
 
 如果你已经安装好了Hadoop，那么你现在安装Spark应该是不费力气的。
 
-首先从官网下载你想要的Spark，一般来说，如果你已经有了
+首先从官网下载你想要的Spark，一般来说，如果你已经安装好了Hadoop，你可以选择安装 *pre-built with user-provider Apache Hadoop* 版本。否则你可以选择其他自己喜欢的版本。一般来说，很少由于版本问题报错。
+
+但是，为了统一，建议使用 *Scala-2.11* 版本。
+
+将下载的好的Spark解压，放到你想要安装的位置。
+
+说出来你可能不信，但是，这样Spark确实就装好了。这样，Spark就算安装完成了。
+
+之后，我们可以跑一个样例。
+
+```shell
+cd spark #进入spark的主目录
+bin/run-example SparkPi 2>&1 | grep "Pi is"
+```
+
+这是一个计算Pi值的示例程序，我们可以看到相应的结果。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-pi.png" style="zoom:80%;" />
+
+我们也可以调用Spark的scala-shell交互式界面。
+
+```shell
+bin/spark-shell
+```
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-shell.png" style="zoom:80%;" />
+
+我们在4040端口，可以看到Spark的WebUI。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-web.png" style="zoom:80%;" />
+
+### 二、Window下IDEA配置Spark的执行环境
+
+前面我们提到过，如果在Windows下配置Hadoop的运行环境，重点在于安装winutils，并配置 *Hadoop_home* 。忘记的人，可以回过头去看看，有了这些之后，其实就可以直接编写Spark代码了。当然，如果你是在linux环境下，那么这一步其实也是可以省略的。
+
+打开IDEA，新建一个Maven项目，名字就叫 *Apache-Spark* 。添加如下Maven依赖。
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-core_2.11</artifactId>
+        <version>2.4.6</version>
+    </dependency>
+</dependencies>
+```
+
+之后，我们main文件夹下创建一个新的文件夹，命名为Scala，再标记为Source Root。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/idea-p1.png" style="zoom:80%;" />
+
+之后，我们就可以在这个Scala文件夹下创建Scala项目了。需要注意的是，如果你的IDEA还没有配置Scala的编码支持，需要自行百度解决一下。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/idea-p2.png" style="zoom:80%;" />
+
+我们可以创建一个名为WordCount的scala文件。将下面的代码填进去。
+
+```scala
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{SparkConf, SparkContext}
+
+object WordCount {
+
+  def main(args: Array[String]): Unit = {
+
+    val conf = new SparkConf().setMaster("local[*]").setAppName("WordCount")
+    val sc = new SparkContext(conf)
+
+    val wordpair: RDD[String] = sc.textFile("D:\\代码\\java\\Apache-Spark\\data.txt") //换成你自己的路径
+    val results = wordpair.flatMap(_.split(" ")).map((_,1)).reduceByKey(_+_)
+
+    results.foreach(println)
+  }
+}
+```
+
+代码执行没问题，就意味着配置成功了。
+
+### 三、Windows下PyCharm配置Spark的执行环境
+
+直接使用pip命令或者在Anconda中下pyspark。
+
+```shell
+pip install pyspark
+```
+
+之后就可以进行编程了。当然，前提是你已经配置好了Hadoop在Windows下的执行环境。
+
+```python
+from pyspark import SparkConf, SparkContext
+
+conf = SparkConf().setMaster('local[*]').setAppName("WordCount")
+sc = SparkContext(conf=conf)
+
+wordpair = sc.textFile("D:\\代码\\python\\Apache-Spark\\data.txt") # 换成你的路径
+results = wordpair.flatMap(lambda x : x.split(" ")).map(lambda x : (x,1)).reduceByKey(lambda x, y : x + y)
+
+results.foreach(print)
+```
+
+###### Notice !!!  已经但凡涉及到Windows下的执行，基础都是之前安装好了Hadoop的Windows环境。如果你还没安装，建议先安装。
 
 ## 第1.3节 Spark RDD
 

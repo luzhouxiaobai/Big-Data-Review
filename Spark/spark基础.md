@@ -161,6 +161,53 @@ RDD解决的第一个问题就是数据共享的问题，MapReduce的数据共�
 
 Spark Core中的操作基本都是基于Spark RDD来进行的。大体上来看，这些操作可以分为四大类。
 
-- 创建操作
+- **创建操作**
 
-  他是指
+  他是用于RDD创建的操作，RDD的创建只有两种方式：一种是来自于内部集合和外部存储系统，另一种是通过转换操作生成的RDD。这里的 **创建操作** 指的是第一种。
+
+  *常用创建算子举例* 注意，这里给出的所有API都是Scala API。 ：
+
+  ```scala
+  parallelize[T](seq: Seq[T], numSlices: Int = defaultParallelism): RDD[T]
+  // seq表示一个集合，numSlices表示分区的数目，你可以理解为它存储在多少机器上
+  // 当Spark基于RDD进行计算的时候，分区数目其实就决定了他的并行度
+  
+  textFile(path: String, minPartitions: Int = defaultMinPartitions): RDD[String]
+  // spark会从该路径path中读取数据，默认按照系统设置的最小分区defaultMinPartition进行分区
+  // 得到的RDD的类型是String字符串类型
+  ```
+
+- **转换操作**
+
+  他是指将RDD通过一定的操作转换为新的RDD的操作。
+
+  *常用RDD算子举例*：
+
+  ```scala
+  map[U](f:(T) => U): RDD[U]
+  // 对RDD中数据集合应用函数f
+  
+  distinct(): RDD[(T)]
+  // 去重
+  
+  flatMap[U](f:(T) => TraversableOnce[U]): RDD[U]
+  // 对RDD中的数据集合应用函数f
+  ```
+
+  **Notice!!! map和flatMap的区别**
+
+  <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-rdd1.png" style="zoom:80%;" />
+
+  可以这么认为：
+
+  **map保有了集合原有的结构，所以我们看到结果是一个Array内部含有多个Array** 。
+
+  **flatMap则会破坏原有的集合结构，相当于把集合先拍扁，再应用函数f** 。
+
+- **控制操作**
+
+  进行RDD持久化的的操作，可以让RDD按照不同的存储策略保存在磁盘中或者内存中。
+
+- **行动操作**
+
+  能够触发RDD运行的操作。

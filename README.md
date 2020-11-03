@@ -8,6 +8,6 @@
   - [MapReduce的进一步探讨](https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/Hadoop/MapReduce的进一步讨论.md)
   - [闲聊MapReduce编程](https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/Hadoop/闲聊MapReduce编程.md)
 
-- ## [Spark](https://github.com/luzhouxiaobai/Big-Data-Review/tree/master/spark)
+- ## [Spark](https://github.com/luzhouxiaobai/Big-Data-Review/tree/master/Spark)
   - [Spark基础](https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/Spark/spark%E5%9F%BA%E7%A1%80.md)
-  - [Spark Core讨论](https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/Spark/spark%E5%9F%BA%E7%A1%80.md)
+  - [Spark Core讨论](https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/Spark/spark%20core%20%E8%AE%A8%E8%AE%BA.md)

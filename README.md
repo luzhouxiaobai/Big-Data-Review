@@ -10,3 +10,4 @@
 
 - ## [Spark](https://github.com/luzhouxiaobai/Big-Data-Review/tree/master/spark)
   - [Spark基础](https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/Spark/spark%E5%9F%BA%E7%A1%80.md)
+  - [Spark Core讨论](https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/Spark/spark%E5%9F%BA%E7%A1%80.md)

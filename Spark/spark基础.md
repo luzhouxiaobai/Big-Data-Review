@@ -271,11 +271,15 @@ object WordCount {
 
 有了注释，我们应该可以看懂代码了。然后我们启动spark-shell，在shell中运行代码。在shell运行代码就不必创建Spark的执行环境了。直接贴操作部分的代码就可以。
 
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/wordcount1.png" style="zoom:80%;" />
 
+这个时候，我们可以在4040端口看到世系图。
 
-
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/wordcount2.png" style="zoom:80%;" />
 
 世系图可以形象地看到算子的变换过程。但是，其实世系图中还有一个概念，`stage` ，也叫`task set` ，他通过宽依赖进行划分，若我们按照宽依赖将世系图切分开，剩下的一个个就是Stage。
+
+由图中可以看出，wordcount的执行分为两个 `stage` ，`stage 0` 内部的算子都是窄依赖的，`stage 1` 内只有一个算子，reduceByKey是一个Shuffle算子，因为他会统计一个RDD中所有分区的内容，假设一个该RDD有3个分区，每个分区中都有一个key为A的数据，那么reduceByKey在计算时，就会统计这三个分区中的key为A的数据，并存储到一个新的RDD的一个分区中。这个过程其实就是Shuffle过程。
 
 综上，我们就聊完了Spark中最基础的三个概念，**Job, task, stage** 。简单来说，Job和Stage都是针对RDD的执行流程而言的，Task则是具体到RDD的每个分区。
 

@@ -208,6 +208,79 @@ Spark Core中的操作基本都是基于Spark RDD来进行的。大体上来看�
 
   进行RDD持久化的的操作，可以让RDD按照不同的存储策略保存在磁盘中或者内存中。
 
+  *常用算子举例* ：
+
+  ```scala
+  cache(): RDD[T]
+  // 将数据缓存
+  
+  persist(): RDD[T]
+  // 数据持久化
+  ```
+
 - **行动操作**
 
   能够触发RDD运行的操作。
+
+  *常用算子举例* ：
+
+  ```scala
+  fist()
+  // 返回RDD中的第一个元素
+  
+  collect()
+  // 将RDD转化为数组
+  ```
+
+### 二、Spark计算
+
+Spark中引入了 **惰性计算** 的概念，它是指，程序在执行过程，并不是真正的进行了计算，而是使用某种方式记录了计算的线路，等到合适的时候再触发真正的计算。
+
+**Spark中，行动操作的算子是触发计算的标志** 。每次行动操作触发的计算称为一个 **Job** 。
+
+Spark采用 **世系图（lineage）** 的方式记录计算的线路。也就是说，在遇到行动操作前，Spark仅仅是记录当前所做的操作，并不会进行真正的计算，遇到行动操作后，才会触发计算，得到结果。
+
+既然Spark的计算可以用世系图来记录，那我们当然可以将他们画出来。我们以上文中的WordCount为例。首先，我们先明确几个需要注意的点：
+
+- 我们前面提过，Spark中的RDD是不可变，只能有创建操作生成，或者从前几个RDD通过转化操作生成。这就意味着Spark的RDD具有依赖关系，若A RDD通过转换操作变成了B RDD，那么A称为B的父RDD，子RDD同理。
+- 我们前面也说过，RDD中有分区的概念。分区决定了计算时的并行度，也就是说，一个RDD中，有多个分区，每个分区中的数据在计算时是单独计算的，所以，其实 **一个分区就是对应Spark中的一个 Task** 。这样，我们就介绍了Spark中两个重要的概念 Job 和 Task了。但是我们介绍Task只是个引子，目的是为了引入Shuffle。还记得MapReduce中的Shuffle，数据从Map端到Reduce端，会经历Partitioner函数的划分，将一个Map节点上的数据划分到多个Reduce节点上。Spark中也有Shuffle，一个分区中的数据，自然也有可能会被发送到子RDD的多个分区中。 **这里就引入了一个概念，如果父RDD到子RDD之间的依赖不是Shuflle，也就是说不存在父RDD的一个分区被子RDD的多个分区依赖，就称为窄依赖，否则就是宽依赖** 。但是需要注意到是，并不是所有的转换算子都是Shuffle算子，只有类似于 `join` 这种会将一个分区中的数据发送到子RDD的多个分区中的算子才是Shuffle算子。
+
+这样，我们可以画一个世系图了。我们先看WordCount的代码：
+
+```scala
+import org.apache.spark.{SparkConf, SparkContext}
+
+object WordCount {
+
+  def main(args: Array[String]): Unit = {
+	//创建Spark的配置信息，setMaster是设置CPU个数，local[*]意味采用本地运行模式，调用本地尽可能多的CPU
+    //setAppName为设置Application的名字
+    val conf = new SparkConf().setMaster("local[*]").setAppName("WordCount") 
+    //创建Spark的执行环境
+    val sc = new SparkContext(conf)
+	//读取对应路径的数据，生成RDD，是创建操作
+    val wordpair = sc.textFile("D:\\代码\\java\\Apache-Spark\\data.txt") 
+    val results = wordpair.flatMap(_.split(" ")) //转换操作，对数据做拆分
+      .map((_,1)) //转换操作，将单个字符串映射为键值对
+      .reduceByKey(_+_) //转换操作，按照Key对键值对进行加和
+
+    results.foreach(println) //打印
+  }
+}
+```
+
+有了注释，我们应该可以看懂代码了。然后我们启动spark-shell，在shell中运行代码。在shell运行代码就不必创建Spark的执行环境了。直接贴操作部分的代码就可以。
+
+
+
+
+
+世系图可以形象地看到算子的变换过程。但是，其实世系图中还有一个概念，`stage` ，也叫`task set` ，他通过宽依赖进行划分，若我们按照宽依赖将世系图切分开，剩下的一个个就是Stage。
+
+综上，我们就聊完了Spark中最基础的三个概念，**Job, task, stage** 。简单来说，Job和Stage都是针对RDD的执行流程而言的，Task则是具体到RDD的每个分区。
+
+**那么，我们可以提一个问题？Spark中的分区和MapReduce中的分区（partition）有什么异同吗** ？
+
+- MapReduce中分区是指Partitioner组件依据哈希函数，将键值对发送到相应的reduce节点上。
+- Spark的分区涉及的是任务的并行度，对应的是task这个概念。
+

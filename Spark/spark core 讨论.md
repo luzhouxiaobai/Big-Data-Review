@@ -99,3 +99,7 @@ object WordCount {
 
 ### 二、Spark创建环境
 
+Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Application的main函数，创建SparkContext，即Spark的执行环境。我们先看一下Driver的组成。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/sparkenv.jpg" style="zoom:80%;" />
+

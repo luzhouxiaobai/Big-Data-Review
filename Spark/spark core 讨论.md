@@ -10,7 +10,7 @@
 
 - Master Node：它是集群部署时候的概念，是整个集群的控制器，负责集群的正常运行，管理Worker Node。
 - Worker Node：它是计算节点，会接收Master Node的命令，并进行状态汇报。
-- Executors：每个Worker Node上都有一个Executor，它负责完成任务的执行。
+- Executors：每个Worker Node上都有一个Executor，它负责完成任务的执行，是一个线程池。
 - Spark集群部署后，需要在主从节点启动Master进程和Worker进程。运行Master进程的节点是Master Node，运行Worker进程的节点是Worker Node。
 
 这就是一个简要版的Spark架构解释，让我们明白了Spark集群中最重要的几个组成部分，有了这些部门，我们就可以深入探讨Spark的其他内容。
@@ -20,3 +20,13 @@
 - Application：基于Spark的应用程序，包含一个Driver程序和多个Executor，当然，我们知道，这个Executor位于Worker中。下图给出了Application的内部图。
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/application.jpg" style="zoom:80%;" />
+
+这个图让我们十分轻松地理解了Spark中的若干个重要的概念。
+
+- Driver：应用程序的执行起点，负责作业调度，它会执行Application中的main函数。
+- Task：Spark中的基本执行单元，它在一个Executor中执行，对应Spark中的分区（partition）。
+- Stage：一个作业的世系图按照宽依赖进行划分，分出的就是一个Stage，它也被称为 Task Set，一个Stage内部会包含若干个task。
+- Job：由Spark中的行动操作触发。
+
+此时，我们再回味这几个概念，是不是更清楚了？当然，你也可以去前一节看看这几个概念我们是怎么引出来的。我们需要注意的是， **一个Worker上只能有一个Executor，Worker和Executor之间是一一对应的关系** 。
+

@@ -106,18 +106,24 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 虽然我们说SparkContext就是Spark执行的环境，但是具体来看，内部又复杂了很多。
 
 - RDD DAG：我们知道，Spark是基于RDD抽象进行描述的，RDD执行的流程会构成世系图，世系图其实就是一个有向无环图（DAG）。SparkContext中保有RDD DAG的信息。
-
 - DAG Scheduler：DAG调度器，显然，输入就是DAG了，它会根据DAG中RDD的依赖关系，得到Stage，将Stage提交给Task Scheduler。
-
 - Task Scheduler：接入Stage，拆分其中的Task提交给Executor执行。
-
 - SparkEnv：线程级别的运行环境，存储运行时的重要组件的引用：
-
   - MapOutPutTracker：我们知道，Spark中会有Shuffle操作的，该组件就存储Shuffle的元信息。
   - BroadcastManager：控制广播变量，并存储其元信息。
   - BlockManager：存储管理，创建和查找块。
   - MetricsSystem：监控运行时性能指标信息。
   - SparkConf：存储配置信息
 
-  
+那现在我们知道，Spark所谓的创建环境其实就为后续的执行做准备，将需要用到的信息要么事先创建，要么为后续使用做好准备。为了方便理解，我们给出几个上述提到的信息一些解释。
+
+**宽窄依赖 ------  窄依赖**
+
+- 这样考虑，一个RDD中的一个Partition中的数据仅仅对应其子RDD的一个Partition，比如说Map算子。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/窄依赖.png" style="zoom:80%;" />
+
+- 一个RDD的一个Partition中的数据会被分发到其子RDD的多个Partition中。比如reduceByKey算子。一个Partition中可能会含有多种key值对应的键值对，这就造成这些key值对应的结果会被分发到子RDD的多个Partition中。
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/宽依赖.png" style="zoom:80%;" />
 

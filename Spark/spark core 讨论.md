@@ -6,7 +6,7 @@
 
 上图展示了Spark的架构的简单示意。
 
-我们不妨先这样认识Spark，它有几个重要的部门：
+我们不妨先这样认识Spark，它有几个重要的部分：
 
 - Master Node：它是集群部署时候的概念，是整个集群的控制器，负责集群的正常运行，管理Worker Node。
 - Worker Node：它是计算节点，会接收Master Node的命令，并进行状态汇报。
@@ -29,4 +29,73 @@
 - Job：由Spark中的行动操作触发。
 
 此时，我们再回味这几个概念，是不是更清楚了？当然，你也可以去前一节看看这几个概念我们是怎么引出来的。我们需要注意的是， **一个Worker上只能有一个Executor，Worker和Executor之间是一一对应的关系** 。
+
+这样看来，我们也不难得出结论，Spark也是 **Master/Slaver架构** 。
+
+## 第2.2节 Spark 执行原理
+
+### 一、先学会WordCount
+
+我们依然把WordCount当作我们的基本用例，虽然前文已经给了WordCount代码，但是我们想试着写一下。还记得之前MapReduce的WordCount代码吗？明明简单的WordCount结果由于僵化的两阶段编程，导致代码又臭又长，反观Spark，言简意赅，极具美感。
+
+第一次写，一定会懵，但是无所谓，我们先思考再动手。
+
+- 我们需要写一个Spark的代码，我们前文说过，Driver进程是Application执行起点，它会执行Application的main函数。所以我们知道（当然，我扯了这么多，就算我不扯你也应该知道，代码是从main函数开始执行的）整个代码应该都是再main函数中书写的。
+- 我们写Spark代码，需要写创建好Spark的执行环境，包括告诉计算机：Application的名字；启动几个节点。我们基于scala写代码，创建环境需要调用Spark中的 **SparkConf** 和 **SparkContext** 。（local模式是指代码在本地运行而非远程执行）。scala中，定义变量用 **var** ，定义常量用 **val** 。我们创建好Spark的上下文环境，就不要改变了，所以这里都用了 **val** 。其实，如果你还记得我们前文描述的 RDD，你就应该清楚，RDD是不可变的，如果需要修改，就只能创建新的 RDD。所以，其实我们下文都是用 **val** 定义不可变的常量。
+
+```scala
+val conf = new SparkConf() //初始话SparkConf类
+			.setMaster("local[*]") //告诉集群，我们启用的是local模式，*表示启用尽可能多的节点，你可以把*改成具体数字
+			.setAppName("WordCount") //应用名字为 WordCount
+val sc = new SparkContext(conf) //创建Spark的执行环境
+```
+
+- 之后就是常规操作了，就是调用算子进行计算。我们这样思考，一开始我们仅仅是文本，Spark中没有Hadoop中的InputFormat将输入数据自动转化为键值对，因此就需要我们自己处理。我们的想法也很粗暴简单：
+
+  - 文本拆分，将
+
+  ```
+  Hello, What's your name ? =>(拆分) 
+  		(Hello,) + (what's) + (your) + (name) + (?)
+  ```
+
+  - 拆分完成后，将每个word组成键值对
+
+  ```
+  (Hello,) => (Hello, , 1)
+  (what's) => (what's , 1)
+  (your)  => (your , 1)
+  (name) => (name , 1)
+  (?) => (? , 1)
+  ```
+
+  - 之后，按照key指相加，就得到最后结果了。
+
+  ```scala
+  // 调用textFile算子读取文件数据
+  val wordpair = sc.textFile("D:\\代码\\java\\Apache-Spark\\data.txt")
+  val results = wordpair.flatMap(_.split(" ")) // 按空格对文本做拆分
+  					.map((_,1)) // 组成键值对
+  					.reduceByKey(_+_) // 按照key值相加
+  ```
+
+这样，一个WordCount就写完了。我们只需要将结果打印出来就可以了。
+
+```scala
+import org.apache.spark.{SparkConf, SparkContext}
+
+object WordCount {
+
+  def main(args: Array[String]): Unit = {
+    val conf = new SparkConf().setMaster("local[*]").setAppName("WordCount") 
+    val sc = new SparkContext(conf)
+    val wordpair = sc.textFile("D:\\代码\\java\\Apache-Spark\\data.txt") 
+    val results = wordpair.flatMap(_.split(" ")).map((_,1)).reduceByKey(_+_)
+
+    results.foreach(println) //打印
+  }
+}
+```
+
+### 二、Spark创建环境
 

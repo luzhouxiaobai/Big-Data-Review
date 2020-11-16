@@ -103,3 +103,21 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/sparkenv.jpg" style="zoom:80%;" />
 
+虽然我们说SparkContext就是Spark执行的环境，但是具体来看，内部又复杂了很多。
+
+- RDD DAG：我们知道，Spark是基于RDD抽象进行描述的，RDD执行的流程会构成世系图，世系图其实就是一个有向无环图（DAG）。SparkContext中保有RDD DAG的信息。
+
+- DAG Scheduler：DAG调度器，显然，输入就是DAG了，它会根据DAG中RDD的依赖关系，得到Stage，将Stage提交给Task Scheduler。
+
+- Task Scheduler：接入Stage，拆分其中的Task提交给Executor执行。
+
+- SparkEnv：线程级别的运行环境，存储运行时的重要组件的引用：
+
+  - MapOutPutTracker：我们知道，Spark中会有Shuffle操作的，该组件就存储Shuffle的元信息。
+  - BroadcastManager：控制广播变量，并存储其元信息。
+  - BlockManager：存储管理，创建和查找块。
+  - MetricsSystem：监控运行时性能指标信息。
+  - SparkConf：存储配置信息
+
+  
+

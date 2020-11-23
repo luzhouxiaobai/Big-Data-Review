@@ -57,7 +57,7 @@ vi /etc/profile
 
 这个命令是需要root权限的，建议进入root用户再进行处理。使用上述命令打开文件后，在文件最后写入Java的目录信息。
 
-<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/java配置.jpg' style='zoom:80%'/>
+<img src='../file/java配置.jpg' style='zoom:80%'/>
 
 这样Java就安装完成了。
 
@@ -65,7 +65,7 @@ vi /etc/profile
 java -version
 ```
 
-<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/java-version.png' style='zoom:80%'/>
+<img src='../file/java-version.png' style='zoom:100%'/>
 
 ## 二、SSH免密登录
 
@@ -256,7 +256,7 @@ sbin/start-yarn.sh
 jps
 ```
 
-<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jps.jpg' style='zoom:80%'/>
+<img src='../file/jps.jpg' style='zoom:100%'/>
 
 #### 叮！！！
 
@@ -264,7 +264,7 @@ jps
 
 打开浏览器，输入地址  **localhost:50070**
 
-<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mr50070.png' style='zoom:80%'/>
+<img src='../file/mr50070.png' style='zoom:80%'/>
 
 现在你就走出了Hadoop的新手村。
 

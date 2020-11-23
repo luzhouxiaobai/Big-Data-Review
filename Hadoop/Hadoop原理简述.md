@@ -4,7 +4,7 @@
 
 Hadoop系统由两部分组成，分别是分布式文件系统HDFS (Hadoop Distributed File System) 和分布式计算框架MapReduce。其中，分布式文件系统主要用于大规模数据的分布式存储，而MapReduce则构建在分布式文件系统之上，对存储在分布式文件系统中的数据进行分布式计算。下图简单展示了Hadoop系统的架构。
 
-<img src='https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop1.png' style='zoom:80%'/>
+<img src='../file/hadoop1.png' style='zoom:80%'/>
 
 从图中可以清晰的看出Hadoop系统由MapReduce和HDFS两个部分组成。虚实线代表了其中的数据流向，在后期HDFS和MapReduce的各自介绍中，我们会详细介绍这些线条所代表的数据走向。
 
@@ -57,7 +57,7 @@ HDFS（Hadoop Distribute File System）是一个分布式文件系统，它是�
 
 ### 二、HDFS的架构
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/HDFS1.jpg" style="zoom:80%;" />
+<img src="../file/HDFS1.jpg" style="zoom:80%;" />
 
 前文我们给出了Hadoop的架构图，并给出了大意讲解，这里给出了HDFS架构的基本示意图。
 
@@ -109,7 +109,7 @@ Q: 你认为数据量达到多少就能被称为大数据了？
 
 分而治之是大数据技术的基本基本思想。MapReduce同样借助了分治思想，将大数据切分为“小”数据，再并行进行处理。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mapreduce1.jpg" style="zoom:50%" />
+<img src="../file/mapreduce1.jpg" style="zoom:70%" />
 
 MapReduce能够解决的问题有一个共同特点：任务可以被分解为多个子问题，且这些子问题相对独立，彼此之间不会有牵制，待并行处理完这些子问题后，任务便被解决。在实际应用中，这类问题非常庞大，谷歌在论文中提到了MapReduce的一些典型应用，包括分布式grep、URL访问频率统计、Web连接图反转、倒排索引构建、分布式排序等。
 
@@ -129,7 +129,7 @@ MapReduce能够解决的问题有一个共同特点：任务可以被分解为�
 
 同HDFS的介绍类似，我们先给出架构图，忽略表示数据流向的线条，我们先关注每个节点。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mapreduce2.jpg" style="zoom:50%" />
+<img src="../file/mapreduce2.jpg" style="zoom:60%" />
 
 - Job Client
 

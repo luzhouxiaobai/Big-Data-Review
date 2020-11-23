@@ -10,11 +10,11 @@
 - 由于Hadoop原生不支持Windows，所以需要一个win工具包，你可以从[此处](https://github.com/steveloughran/winutils)下载。将对应版本或者相近版本的 **hadoop/bin** 目录下的文件全部复制到刚刚解压的Hadoop文件的bin目录下即可。
 - 配置Window下的Hadoop路径。右键点击 `我的电脑` ，打开 `属性` , 打开 `高级系统设置` , 打开 `环境变量` , 在 `系统变量` 栏，创建 `HADOOP_HOME` 环境变量，值为你的Hadoop路径。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop_home.png" style="zoom:80%;" />
+<img src="../file/hadoop_home.png" style="zoom:80%;" />
 
 之后，在 `系统变量` 栏的 `Path` 条目下，添加的你的Hadoop路径的bin路径。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop_path.png" style="zoom:80%;" />
+<img src="../file/hadoop_path.png" style="zoom:80%;" />
 
 以上步骤完成之后，就完成了在Windows下开发MapReduce代码的必备步骤。
 
@@ -246,15 +246,15 @@ public class WordCount {
 
 在 `main` 函数中，我们看到输入文件路径是第一个参数，输出文件路径是第二个参数。在IDEA的配置方式如下图：
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/idea1.png" style="zoom:80%;" />
+<img src="../file/idea1.png" style="zoom:80%;" />
 
 如果点开后发现不一致，可以先运行代码（会报错，但是之后就正常了。）
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/idea2.png" style="zoom:80%;" />
+<img src="../file/idea2.png" style="zoom:80%;" />
 
 输入的参数就是对应的 `args[0]` 和 `args[1]` 两个参数用空格隔开。需要注意的是，输出的路径必须不存在，不然会报错提示该路径已经存在。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/output.png" style="zoom:80%;" />
+<img src="../file/output.png" style="zoom:80%;" />
 
 上图展示的部分结果。如果你足够仔细，你会发现结果是按照Key值排序的。这里是不是和前面的MapReduce的讲解对应上了。
 
@@ -262,15 +262,15 @@ public class WordCount {
 
 ### 一、打Jar包的方法
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar1.png" style="zoom:80%;" />
+<img src="../file/jar1.png" style="zoom:80%;" />
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar2.png" style="zoom:80%;" />
+<img src="../file/jar2.png" style="zoom:80%;" />
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar3.png" style="zoom:80%;" />
+<img src="../file/jar3.png" style="zoom:80%;" />
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar4.png" style="zoom:80%;" />
+<img src="../file/jar4.png" style="zoom:80%;" />
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/jar5.png" style="zoom:80%;" />
+<img src="../file/jar5.png" style="zoom:80%;" />
 
 之后会发现，出现一个 `out` 文件夹，里面就是刚刚操作完成之后的Jar包。
 
@@ -292,7 +292,7 @@ public class WordCount {
 
 但是我在WSL中，按照上述的方法，提交Jar包运行会提示Container被kill掉了。打开yarn的8088端口，提示信息如下：
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/8088.png" style="zoom:80%;" />
+<img src="../file/8088.png" style="zoom:80%;" />
 
 原因是说占用的内存过多了。Demo是官网给的例子。按理说不该存在问题。
 

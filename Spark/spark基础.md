@@ -21,7 +21,7 @@ MapReduce的弊端促使科学家探索新的计算模式。在后Hadoop时代�
 
 相较于Hadoop MapReduce，Spark的优势也很明显，首先是 **速度** ，官网的对比图简洁明了。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/speed.png" style="zoom:80%;" />
+<img src="../file/spark/speed.png" style="zoom:80%;" />
 
 再者是 **广泛性** ，Spark支持SQL，Streaming，以及Graph等。
 
@@ -58,7 +58,7 @@ bin/run-example SparkPi 2>&1 | grep "Pi is"
 
 这是一个计算Pi值的示例程序，我们可以看到相应的结果。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-pi.png" style="zoom:80%;" />
+<img src="../file/spark/spark-pi.png" style="zoom:80%;" />
 
 我们也可以调用Spark的scala-shell交互式界面。
 
@@ -66,11 +66,11 @@ bin/run-example SparkPi 2>&1 | grep "Pi is"
 bin/spark-shell
 ```
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-shell.png" style="zoom:80%;" />
+<img src="../file/spark/spark-shell.png" style="zoom:80%;" />
 
 我们在4040端口，可以看到Spark的WebUI。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-web.png" style="zoom:80%;" />
+<img src="../file/spark/spark-web.png" style="zoom:80%;" />
 
 ### 二、Window下IDEA配置Spark的执行环境
 
@@ -90,11 +90,11 @@ bin/spark-shell
 
 之后，我们main文件夹下创建一个新的文件夹，命名为Scala，再标记为Source Root。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/idea-p1.png" style="zoom:80%;" />
+<img src="../file/spark/idea-p1.png" style="zoom:60%;" />
 
 之后，我们就可以在这个Scala文件夹下创建Scala项目了。需要注意的是，如果你的IDEA还没有配置Scala的编码支持，需要自行百度解决一下。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/idea-p2.png" style="zoom:80%;" />
+<img src="../file/spark/idea-p2.png" style="zoom:80%;" />
 
 我们可以创建一个名为WordCount的scala文件。将下面的代码填进去。
 
@@ -196,7 +196,7 @@ Spark Core中的操作基本都是基于Spark RDD来进行的。大体上来看�
 
   **Notice!!! map和flatMap的区别**
 
-  <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-rdd1.png" style="zoom:80%;" />
+  <img src="../file/spark/spark-rdd1.png" style="zoom:80%;" />
 
   可以这么认为：
 
@@ -271,11 +271,11 @@ object WordCount {
 
 有了注释，我们应该可以看懂代码了。然后我们启动spark-shell，在shell中运行代码。在shell运行代码就不必创建Spark的执行环境了。直接贴操作部分的代码就可以。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/wordcount1.png" style="zoom:80%;" />
+<img src="../file/spark/wordcount1.png" style="zoom:80%;" />
 
 这个时候，我们可以在4040端口看到世系图。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/wordcount2.png" style="zoom:80%;" />
+<img src="../file/spark/wordcount2.png" style="zoom:60%;" />
 
 世系图可以形象地看到算子的变换过程。但是，其实世系图中还有一个概念，`stage` ，也叫`task set` ，他通过宽依赖进行划分，若我们按照宽依赖将世系图切分开，剩下的一个个就是Stage。
 

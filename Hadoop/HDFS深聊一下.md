@@ -2,7 +2,7 @@
 
 HDFS 是一个分布式文件系统，我们在前面也稍微讨论了一下集中式文件系统的一些弊端，我们还是从之前的那张HDFS架构图出发。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/HDFS1.jpg" style="zoom:80%;" />
+<img src="../file/HDFS1.jpg" style="zoom:80%;" />
 
 当我们开始关注线条所代表的数据流向后，其实上图就可以看作是一个HDFS数据读写的流程图了。在探讨具体的读写之前，我们先看看不同节点中存储的数据。
 
@@ -51,7 +51,7 @@ HDFS 是一个分布式文件系统，我们在前面也稍微讨论了一下集
 
 我们先看本地的操作系统中，一个简单的读流程应该是怎么样的。首先，我们需要知道文件的全路径名，通过全路径访问到这个文件，读取文件中的数据。在HDFS中这个过程应该是类似的。示意图如下：
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hdfs读.jpg" style="zoom:80%;" />
+<img src="../file/hdfs读.jpg" style="zoom:80%;" />
 
 ------
 
@@ -68,7 +68,7 @@ HDFS 是一个分布式文件系统，我们在前面也稍微讨论了一下集
 
 写过程与上述过程类似。示意图如下：
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hdfs写.jpg" style="zoom:80%;" />
+<img src="../file/hdfs写.jpg" style="zoom:80%;" />
 
 ------
 
@@ -224,7 +224,7 @@ HDFS高可用是配置了一对活动-备用（active-standby）NameNode。当�
 
 HDFS支持shell命令和Java API。这里仅介绍一点常用的shell命令。先看下Hadoop的软件分布
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/hadoop目录.png" style="zoom:80%;" />
+<img src="../file/hadoop目录.png" style="zoom:80%;" />
 
 ------
 

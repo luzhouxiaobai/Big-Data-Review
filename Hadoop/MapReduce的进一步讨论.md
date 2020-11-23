@@ -9,7 +9,7 @@
 
 ## 第4.1节 MapReduce的并行化计算模型
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/mr并行编程.jpg" style="zoom:80%;" />
+<img src="../file/mr并行编程.jpg" style="zoom:60%;" />
 
 看图说话，我们基于一个大数据领域的“HelloWorld“，”wordcount"，结合上图中的MapReduce并行计算模型来讲解MapReduce的计算过程。
 
@@ -203,10 +203,10 @@ Shuffle不是一个单独的任务，它是MapReduce执行中的步骤，Shuffle
 
 ### 二、Map端的Shuffle
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/shuffle-spill.jpg" style="zoom:80%;" />
+<img src="../file/shuffle-spill.jpg" style="zoom:80%;" />
 
 如上图所示，在Map端的shuffle过程是对Map的结果进行分区、排序、分割，然后将属于同一划分（分区）的输出合并在一起并写在磁盘上，最终得到一个**分区有序**的文件，分区有序的含义是Map输出的键值对按分区进行排列，具有相同partition值的键值对存储在一起，每个分区里面的键值对又按key值进行升序排列（默认），这里的partition值是指利用Partitioner.getPartition得到的结果，他也是Partitioner分区的依据。上述流程还可以用如下图进行表示：
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/shuffle-map.jpg" style="zoom:80%;" />
+<img src="../file/shuffle-map.jpg" style="zoom:80%;" />
 
 #### Collector
 
@@ -226,7 +226,7 @@ Map任务如果输出数据量很大，可能会进行好几次Spill，会产生
 
 Merge会扫描本地文件，找到所有的的Spill文件，这些Spill文件都是局部有序的（同一个Spill文件按照partition值有序，同一个partition值内按照key值有序）。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/merge流程.jpg" style="zoom:80%;" />
+<img src="../file/merge流程.jpg" style="zoom:60%;" />
 
 然后为merge过程会一个partition一个partition的进行合并输出。对于某个partition来说，从索引列表中查询这个partition对应的所有的键值对 **key-value** ，也就是一个Segment的数据。
 

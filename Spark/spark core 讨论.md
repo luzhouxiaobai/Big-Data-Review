@@ -2,7 +2,7 @@
 
 ## 第2.1节 Spark 架构
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark架构.jpg" style="zoom:80%;" />
+<img src="../file/spark/spark架构.jpg" style="zoom:80%;" />
 
 上图展示了Spark的架构的简单示意。
 
@@ -19,7 +19,7 @@
 
 - Application：基于Spark的应用程序，包含一个Driver程序和多个Executor，当然，我们知道，这个Executor位于Worker中。下图给出了Application的内部图。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/application.jpg" style="zoom:80%;" />
+<img src="../file/spark/application.jpg" style="zoom:50%;" />
 
 这个图让我们十分轻松地理解了Spark中的若干个重要的概念。
 
@@ -101,7 +101,7 @@ object WordCount {
 
 Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Application的main函数，创建SparkContext，即Spark的执行环境。我们先看一下Driver的组成。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/sparkenv.jpg" style="zoom:80%;" />
+<img src="../file/spark/sparkenv.jpg" style="zoom:50%;" />
 
 虽然我们说SparkContext就是Spark执行的环境，但是具体来看，内部又复杂了很多。
 
@@ -121,13 +121,13 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 
 - 这样考虑，一个RDD中的一个Partition中的数据仅仅对应其子RDD的一个Partition，比如说Map算子。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/窄依赖.png" style="zoom:80%;" />
+<img src="../file/spark/窄依赖.png" style="zoom:100%;" />
 
 **宽窄依赖 ------  宽依赖**
 
 - 一个RDD的一个Partition中的数据会被分发到其子RDD的多个Partition中。比如reduceByKey算子。一个Partition中可能会含有多种key值对应的键值对，这就造成这些key值对应的结果会被分发到子RDD的多个Partition中。
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/宽依赖.png" style="zoom:80%;" />
+<img src="../file/spark/宽依赖.png" style="zoom:100%;" />
 
 **那么，为什么会出现这种状况呢？为什么不是初始的时候，所有相同key值的数据就在同一个分区呢？很容易想到，这个和Spark的数据分区策略有关。**
 
@@ -166,7 +166,7 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 
 ### 四、Spark任务执行
 
-<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-exec.png" style="zoom:80%;" />
+<img src="../file/spark/spark-exec.png" style="zoom:100%;" />
 
 - 首先，客户端（Client）会向集群提交一个应用（Application），Master会启动Driver程序；
 - Driver会向Cluster Manager申请资源，构建Application的运行环境，即启动SparkContext；
@@ -178,7 +178,7 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 
 - DAGScheduler会把DAG进行拆分，变成相互依赖的调度阶段（Stage），拆分依据则是RDD之间的依赖是否会宽依赖。在Spark执行的时候，调度阶段的拆分按照如下步骤进行，我们以下图为例：
 
-  <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/stage0.png" style="zoom:80%;" />
+  <img src="../file/spark/stage0.png" style="zoom:100%;" />
 
   - Job在SparkContext中提交运行的时候会调用DAGScheduler中的handleJobSubmitted进行处理，该方法会先找到最后一个RDD，也就是rddG，然后调用getParentStages方法；
   - 在getParentStages方法中，会判断RDD之间是否存在Shuffle操作（即，宽依赖），在此例中，Join操作是Shuffle操作

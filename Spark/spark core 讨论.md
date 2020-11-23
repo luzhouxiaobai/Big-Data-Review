@@ -123,7 +123,31 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/窄依赖.png" style="zoom:80%;" />
 
+**宽窄依赖 ------  宽依赖**
+
 - 一个RDD的一个Partition中的数据会被分发到其子RDD的多个Partition中。比如reduceByKey算子。一个Partition中可能会含有多种key值对应的键值对，这就造成这些key值对应的结果会被分发到子RDD的多个Partition中。
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/宽依赖.png" style="zoom:80%;" />
 
+**那么，为什么会出现这种状况呢？为什么不是初始的时候，所有相同key值的数据就在同一个分区呢？很容易想到，这个和Spark的数据分区策略有关。**
+
+- Spark中默认提供两种划分器： **哈希分区划分器（HashPartitioner）和范围分区划分器（RangePartitioner）** 。且，Partitioner只存在于 <Key, Value> 类型的RDD中，对于非键值对类型的RDD，其Partitioner值为None。
+- 在创建RDD时，若我们不指定分区数，Spark提供了一些分区规则
+
+> 如果配置文件spark-default.conf中没有显示的配置，则按照如下规则取值：
+>
+> 本地模式（不会启动executor，由SparkSubmit进程生成指定数量的线程数来并发）：
+>
+>   spark-shell                                      spark.default.parallelism = 1
+>
+>   spark-shell --master local[N]       spark.default.parallelism = N （使用N个核）
+>
+>   spark-shell --master local             spark.default.parallelism = 1
+>
+> 
+>
+>  伪集群模式（x为本机上启动的executor数，y为每个executor使用的core数，z为每个 executor使用的内存）
+>
+>    spark-shell --master local-cluster[x,y,z]            spark.default.parallelism = x * y
+
+所以，初始的时候，我们输入的所有数据，它的Partitioner值是None，因此，他们一般是按照大小来进行分区的，这个时候就可以理解为什么会出现宽窄依赖这种状况了。

@@ -168,6 +168,26 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 
 <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-exec.png" style="zoom:80%;" />
 
-- 首先，客户端（Client）会向集群提交一个应用（Application），Master会启动Driver程序
-- Driver会向Cluster Manager申请资源，构建Application的运行环境，即启动SparkContext
-- SparkContext会向
+- 首先，客户端（Client）会向集群提交一个应用（Application），Master会启动Driver程序；
+- Driver会向Cluster Manager申请资源，构建Application的运行环境，即启动SparkContext；
+- SparkContext会向Cluster Manager申请Executor资源，Executor则向SparkContext申请Task，SparkContext会将代码下发到Executor。需要注意的是，Standalone模式下，Cluster Manger由Master充当；在Yarn模式下，Cluster Manager由Resource Manager充当；
+
+这里讲述的其实就是上图展示的一个Spark应用执行的大体流程。但是Spark应用执行中，会涉及到 **Application | Job | Stage | Task** 这些概念的转换，由此我们可以进行更细致的讨论。
+
+-  我们知道，Spark提交一个应用，应用的代码由一系列RDD操作构成。每次遇到行动操作则触发作业（Job）执行，Spark依据RDD之间依赖关系构建DAG图，DAG图构建好之后提交给DAGScheduler进行解析；
+
+- DAGScheduler会把DAG进行拆分，变成相互依赖的调度阶段（Stage），拆分依据则是RDD之间的依赖是否会宽依赖。在Spark执行的时候，调度阶段的拆分按照如下步骤进行，我们以下图为例：
+
+  <img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/stage0.png" style="zoom:80%;" />
+
+  - Job在SparkContext中提交运行的时候会调用DAGScheduler中的handleJobSubmitted进行处理，该方法会先找到最后一个RDD，也就是rddG，然后调用getParentStages方法；
+  - 在getParentStages方法中，会判断RDD之间是否存在Shuffle操作（即，宽依赖），在此例中，Join操作是Shuffle操作
+  - 调用getAncestorShuffleDependenices方法从rddB向前遍历，发现该依赖分治上没有其他宽依赖，故调用newOrUsedShuffleStage 方法生成调度阶段（Stage）ShuffleMapStage0；
+  - 使用getAncestorShuffleDependenices方法从rddF向前遍历，发现存在宽依赖 groupBy ，以此分界划分 rddD 和 rddC 为ShuffleMapStage1，rddE 和 rddF 为ShuffleMapStage2；
+  - 最后得到生成rddG的ResultStage3
+  
+- 我们知道Stage又称task set，因此每一个调度阶段内会包含多个任务，Spark会将Stage提交给TaskScheduler进行调度，同时DAGScheduler会记录哪些RDD被存入磁盘，监控哪些调度阶段调度失败等；
+
+- TaskScheduler会接收来自DAGScheduler发送的task set，然后将task set中的任务一个个发送到Worker节点上的Executor上进行执行。如果task执行失败，TaskScheduler需要负责重试；
+
+- Worker中的Executor接收到TaskScheduler发送过来的任务后会以多线程的方式运行，任务结束后将结果返回给TaskScheduler。

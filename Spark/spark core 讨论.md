@@ -154,5 +154,20 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 
 **广播变量** 是一项重要技术，我们在后面的内容介绍。
 
-### 三、Spark执行流程
+### 三、Spark集群的启动
 
+有了前面的介绍，我们就可以进一步介绍Spark程序的执行流程了。
+
+首先，我们需要启动集群。Spark的启动主要是Master节点和Worker节点之间的通信。
+
+- Master节点先启动，随之会启动Worker节点，每个Worker节点启动时需要向Master节点发送注册信息
+- Master节点收到消息后需要对Worker节点发送的信息进行验证、记录。若是Worker节点注册成功，Master节点会将注册成功的消息发送回Worker
+- Worker节点收到注册成功的信息后就会定期发送心跳（Heartbeat）给Master
+
+### 四、Spark任务执行
+
+<img src="https://github.com/luzhouxiaobai/Big-Data-Review/blob/master/file/spark/spark-exec.png" style="zoom:80%;" />
+
+- 首先，客户端（Client）会向集群提交一个应用（Application），Master会启动Driver程序
+- Driver会向Cluster Manager申请资源，构建Application的运行环境，即启动SparkContext
+- SparkContext会向

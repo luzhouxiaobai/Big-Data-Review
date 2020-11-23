@@ -151,3 +151,8 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 >    spark-shell --master local-cluster[x,y,z]            spark.default.parallelism = x * y
 
 所以，初始的时候，我们输入的所有数据，它的Partitioner值是None，因此，他们一般是按照大小来进行分区的，这个时候就可以理解为什么会出现宽窄依赖这种状况了。
+
+**广播变量** 是一项重要技术，我们在后面的内容介绍。
+
+### 三、Spark执行流程
+

@@ -191,3 +191,31 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
 - TaskScheduler会接收来自DAGScheduler发送的task set，然后将task set中的任务一个个发送到Worker节点上的Executor上进行执行。如果task执行失败，TaskScheduler需要负责重试；
 
 - Worker中的Executor接收到TaskScheduler发送过来的任务后会以多线程的方式运行，任务结束后将结果返回给TaskScheduler。
+
+### 五、Spark中的容错
+
+在前面的讨论中，我们知道了Spark系统中一些基本要素：Master、Worker、Executor。这些要素其实就是一些物理节点或者是线程、进程，既然如此，他们就必然可能会出错。这也是大数据领域的基本思想：出错被认为是常态。那出错之后，Spark该如何应对呢？
+
+1. Executor异常
+
+   - Executor启动过程：集群中的master节点给应用分配运行所需要的资源之后，Worker节点会启动ExecutorRunner，ExecutorRunner会根据当前运行模式启动GoarseGrainedExecutorBackend进程，他会向Driver发送注册Executor信息。如果注册成功，GoarseGrainedExecutorBackend会在内部启动Executor。Executor由ExecutorRunner进行管理，当Executor出现异常时，由ExecutorRunner捕获该异常，并发送ExecutorStateChanged消息给Worker。
+   - Worker接收到异常信息后，在Worker上的HandlerExecutorStateChanged方法会依据Executor的状态进行信息更新，同时将Executor信息发送给Master。
+   - Master接收到Executor状态变化后，如果发现Executor异常退出，则调用Master.schedule方法，尝试获取可用的Worker节点并启动Executor。而这个Worker节点很可能不是之前的Worker节点。系统会尝试10次，如果超过10次，则标记该应用程序失败，并从集群中移除。这种设定是为了避免反复提交有Bug的程序，占用系统资源。
+
+2. Worker异常
+
+   - Spark集群中采用Master/Slaver模式。Worker扮演从节点，会定时给Master发送心跳信息，让Master知道Worker的实时信息。不仅如此，Master还会感知注册的Worker节点是否出现超时。
+   - 为了感知Worker是否超时未发送心跳信息。在Master接收到Worker心跳的同时，在其启动方法onStart中启动Worker超时检测线程。
+   - 当Worker出现异常时，会依据自身运行的是Executor还是Driver进行处理：
+     - 如果运行的是Executor，Master会先把Worker上运行的Executor信息发送消息ExecutorUpdated给对应的Driver，告知Executor已丢失，同时把Executor从运行的应用程序列表中删除。之后在进行Executor异常的处理流程。
+     - 如果运行的是Driver，则判断是否设置了重新启动。如果需要，则调用Master.schedule方法进行调度，分配合适节点重启Driver。否则就删除该应用。
+
+3. Master异常
+
+   - Master异常牵涉到Spark的HA机制。
+
+- 在集群启动的时候，Master会启动一个或者多个standby Master，当Master出现异常的时候，standby会依据规则确定一个接管Master。有如下几种模式，默认是None。
+  - Zookeeper：元数据持久化到Zookeeper中。
+  - FileSystem：集群元数据持久化到本地文件系统中。
+  - Custom：自定义恢复方式。
+  - None：不持久化集群元数据。当Master出现异常时，新启动的Master不进行恢复集群状态，直接接管。

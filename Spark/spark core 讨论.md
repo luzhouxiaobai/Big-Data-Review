@@ -219,3 +219,47 @@ Spark执行环境的创建是Spark代码执行的第一步，Driver会执行Appl
   - FileSystem：集群元数据持久化到本地文件系统中。
   - Custom：自定义恢复方式。
   - None：不持久化集群元数据。当Master出现异常时，新启动的Master不进行恢复集群状态，直接接管。
+
+## 第2.3节 Spark的执行原理
+
+Spark是基于内存进行计算，但是Spark中RDD所表示数据集不仅可以存储在内存中，也可以存储在磁盘中。Spark中提供了两种显示的缓存控制方法： **cache** 和 **persist ** 。
+
+```scala
+val data = sc.textFile("path")
+val dataFirstSolve = data.flatMap(_.split(" ")).map((_,1))
+dataFirstSolve.cache() // 对处理好数据进行缓存，cache仅支持缓存在内存中
+dataFirstSolve.persist()
+```
+
+**persist** 算子支持多种不同的存储级别。
+
+```scala
+DISK_ONLY  //仅磁盘
+DISK_ONLY_2  // 仅磁盘，有2份
+MEMORY_ONLY // 仅内存，以下同
+MEMORY_ONLY_2
+MEMORY_ONLY_SER // 仅内存，并且对数据做了序列化
+MEMORY_ONLY_SER_2
+MEMORY_AND_DISK
+MEMORY_AND_DISK_2
+MEMORY_AND_DISK_SER
+MEMORY_AND_DISK_SER_2
+```
+
+默认情况下，性能最高的当然是MEMORY_ONLY，但前提是你的内存必须足够足够大。如果纯内存的级别都无法使用，那么建议使用MEMORY_AND_DISK_SER策略，而不是MEMORY_AND_DISK策略。因为既然到了这一步，就说明RDD的数据量很大，内存无法完全放下。序列化后的数据比较少，可以节省内存和磁盘的空间开销。同时该策略会优先尽量尝试将数据缓存在内存中，内存缓存不下才会写入磁盘。通常不建议使用DISK_ONLY和后缀为2的级别：因为完全基于磁盘文件进行数据的读写，会导致性能急剧降低，有时还不如重新计算一次所有RDD。后缀为2的级别，必须将所有数据都复制一份副本，并发送到其他节点上，数据复制以及网络传输会导致较大的性能开销，除非是要求作业的高可用性，否则不建议使用。
+
+Spark采用了惰性计算的方式，每次需要该RDD的数据的时候，都会重新计算，这是一种耗时的方式， **cache** 和 **persisit** 两个算子可以将已经计算出的数据缓存起来，可以方便下次直接使用。
+
+在Spark中，除了这两种算子，还有 **checkpoint** ，它是一种设置检查点的方式。**cache** 和 **persisit** 会将数据保存在内存或者磁盘上，本质上，这些数据还是保存在计算所在的机器上，当机器故障出错，数据依然会丢失。 **checkpoint** 则可以将数据保存在一个高可用的地方，比如HDFS。并且， **checkpoint** 会切断世系图的联系，这一点很重要。
+
+```scala
+val rdd = sc.textFile("path")
+sc.setCheckpointDir("path for checkpoint") // checkpoint前要先
+rdd.cache() // checkpoint前由行动操作会触犯一遍计算，进行checkpoint时，会重新计算前面的世系图路径，然后切断该RDD的世系图联系，因此会计算两边，所以最好先cache
+rdd.checkpoint  // checkpoint是>>>转换操作<<<
+```
+
+
+
+### 一、Spark中的Shuffle
+
